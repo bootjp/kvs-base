@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option go_package = "github.com/bootjp/raft-grpc-example/proto";
+
+service KVS {
+	rpc AddData(AddDataRequest) returns (AddDataResponse) {}
+	rpc GetData(GetDataRequest) returns (GetDataResponse) {}
+}
+
+message AddDataRequest {
+	bytes key = 1;
+	bytes data = 2;
+}
+
+message AddDataResponse {
+	uint64 commit_index = 1;
+}
+
+message GetDataRequest {
+	bytes key = 1;
+}
+
+message GetDataResponse {
+	uint64 read_at_index = 1;
+	bytes key = 10;
+	bytes data = 20;
+}

@@ -1,3 +1,9 @@
+# binary
+kvs-infrastructure
+
+# datadir
+data
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
