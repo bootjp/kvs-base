@@ -47,7 +47,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	wt := &wordTracker{}
+	wt := &KVS{}
+	wt.data = map[[KeyLimit]byte]*Pair{}
 
 	r, tm, err := NewRaft(ctx, *raftId, *myAddr, wt)
 	if err != nil {

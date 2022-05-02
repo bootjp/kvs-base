@@ -12,16 +12,31 @@ message AddDataRequest {
 	bytes data = 2;
 }
 
+enum Status {
+	COMMIT = 0;
+	ABORT = 1;
+}
+
 message AddDataResponse {
 	uint64 commit_index = 1;
+	Status Status = 2;
 }
 
 message GetDataRequest {
 	bytes key = 1;
 }
 
+enum GetDataError {
+	NO_ERROR = 0;
+	FETCH_ERROR = 1;
+	DATA_NOT_FOUND = 2;
+}
+
 message GetDataResponse {
 	uint64 read_at_index = 1;
+	GetDataError Error = 2;
 	bytes key = 10;
 	bytes data = 20;
 }
+
+
