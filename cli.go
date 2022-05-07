@@ -32,40 +32,36 @@ import (
 type RequestType uint64
 
 const (
-	exampleClusterID uint64 = 128
-)
-
-const (
-	PUT RequestType = iota
+	Unknown RequestType = iota
+	PUT
 	GET
+	DELETE
 )
 
-var (
-	Addresses = []string{
-		"localhost:63001",
-		"localhost:63002",
-		"localhost:63003",
-		"localhost:63004",
-		"localhost:63005",
-		"localhost:63006",
-	}
-)
-
-func ParseCommand(msg string) (RequestType, string, string, bool) {
+func ParseCommand(msg string) (RequestType, string, []byte, bool) {
 	parts := strings.Split(strings.TrimSpace(msg), " ")
-	if len(parts) == 0 || (parts[0] != "put" && parts[0] != "get") {
-		return PUT, "", "", false
+	if len(parts) == 0 {
+		return PUT, "", []byte(""), false
 	}
-	if parts[0] == "put" {
+	switch parts[0] {
+	case "put":
 		if len(parts) != 3 {
-			return PUT, "", "", false
+			return PUT, "", []byte(""), false
 		}
-		return PUT, parts[1], parts[2], true
+		return PUT, parts[1], []byte(parts[2]), true
+	case "get":
+		if len(parts) != 2 {
+			return GET, "", []byte(""), false
+		}
+		return GET, parts[1], []byte(""), true
+	case "delete":
+		if len(parts) != 2 {
+			return DELETE, "", []byte(""), false
+		}
+		return DELETE, parts[1], []byte(""), true
 	}
-	if len(parts) != 2 {
-		return GET, "", "", false
-	}
-	return GET, parts[1], "", true
+
+	return Unknown, "", []byte(""), false
 }
 
 func printUsage() {
