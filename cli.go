@@ -20,11 +20,13 @@ package kvs
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/lni/dragonboat/v3"
+	"github.com/lni/dragonboat/v3/logger"
 
 	"github.com/lni/goutils/syncutil"
 )
@@ -37,6 +39,21 @@ const (
 	GET
 	DELETE
 )
+
+func init() {
+
+	logger.GetLogger("raft").SetLevel(logger.ERROR)
+	logger.GetLogger("rsm").SetLevel(logger.WARNING)
+	logger.GetLogger("transport").SetLevel(logger.WARNING)
+	logger.GetLogger("grpc").SetLevel(logger.WARNING)
+
+	f := flag.NewFlagSet("", flag.ExitOnError)
+	f.IntVar(&nodeID, "nodeid", 1, "NodeID to use")
+	f.BoolVar(&enableConsole, "console", false, "is non interactive")
+	f.BoolVar(&join, "join", false, "Joining a new node")
+	f.Uint64Var(&clusterID, "clusterid", 1, "cluster id")
+	_ = f.Parse(os.Args[1:]) // ignore error use flag.ExitOnError
+}
 
 func ParseCommand(msg string) (RequestType, string, []byte, bool) {
 	parts := strings.Split(strings.TrimSpace(msg), " ")
