@@ -22,7 +22,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,7 +40,6 @@ import (
 
 	"github.com/lni/dragonboat/v3"
 	"github.com/lni/dragonboat/v3/config"
-	"github.com/lni/dragonboat/v3/logger"
 	"github.com/lni/goutils/syncutil"
 
 	"github.com/cockroachdb/pebble"
@@ -54,7 +52,6 @@ const (
 	testDBDirName      string = "data"
 	currentDBFilename  string = "current"
 	updatingDBFilename string = "current.updating"
-	exampleClusterID   uint64 = 123
 )
 
 var (
@@ -69,24 +66,12 @@ func init() {
 	if runtime.GOOS == "darwin" {
 		signal.Ignore(syscall.Signal(0xd))
 	}
-
-	logger.GetLogger("raft").SetLevel(logger.ERROR)
-	logger.GetLogger("rsm").SetLevel(logger.WARNING)
-	logger.GetLogger("transport").SetLevel(logger.WARNING)
-	logger.GetLogger("grpc").SetLevel(logger.WARNING)
-
-	f := flag.NewFlagSet("", flag.ExitOnError)
-	f.IntVar(&nodeID, "nodeid", 1, "NodeID to use")
-	f.BoolVar(&enableConsole, "console", false, "is non interactive")
-	f.BoolVar(&join, "join", false, "Joining a new node")
-	f.Uint64Var(&clusterID, "clusterid", 1, "cluster id")
-	_ = f.Parse(os.Args[1:]) // ignore error use flag.ExitOnError
 }
 
 func raftConfig(nodeID uint64) config.Config {
 	return config.Config{
 		NodeID:             nodeID,
-		ClusterID:          exampleClusterID,
+		ClusterID:          clusterID,
 		ElectionRTT:        10,
 		HeartbeatRTT:       1,
 		CheckQuorum:        true,
@@ -139,7 +124,7 @@ func Run() error {
 		Console(raftStopper, ch, nh)
 	}
 	raftStopper.RunWorker(func() {
-		cs := nh.GetNoOPSession(exampleClusterID)
+		cs := nh.GetNoOPSession(clusterID)
 		for {
 			select {
 			case v, ok := <-ch:
@@ -156,15 +141,19 @@ func Run() error {
 					continue
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-				kv := &KVData{
-					Key: key,
-					Val: val,
-					OP:  PUT,
+
+				op := OPLog{
+					OP: PUT,
+					KVData: KVData{
+						Key: key,
+						Val: val,
+					},
 				}
+
 				switch rt {
 				case DELETE:
-					kv.OP = DELETE
-					data, err := json.Marshal(kv)
+					op.OP = DELETE
+					data, err := json.Marshal(op)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Update Marhsal returned error %v\n", err)
 						continue
@@ -175,8 +164,8 @@ func Run() error {
 						continue
 					}
 				case PUT:
-					kv.OP = PUT
-					data, err := json.Marshal(kv)
+					op.OP = PUT
+					data, err := json.Marshal(op)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Update Marhsal returned error %v\n", err)
 						continue
@@ -187,8 +176,8 @@ func Run() error {
 						continue
 					}
 				case GET:
-					kv.OP = GET
-					result, err := nh.SyncRead(ctx, exampleClusterID, []byte(key))
+					op.OP = GET
+					result, err := nh.SyncRead(ctx, clusterID, []byte(key))
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "SyncRead returned error %v\n", err)
 						continue
@@ -235,10 +224,14 @@ func syncDir(dir string) (err error) {
 	return df.Sync()
 }
 
+type OPLog struct {
+	OP     RequestType
+	KVData KVData
+}
+
 type KVData struct {
 	Key string
 	Val []byte
-	OP  RequestType
 }
 
 // pebbledb is a wrapper to ensure lookup() and close() can be concurrently
@@ -550,19 +543,22 @@ func (d *DiskKV) Update(ents []sm.Entry) ([]sm.Entry, error) {
 	wb := db.db.NewBatch()
 	defer wb.Close()
 	for idx, e := range ents {
-		dataKV := &KVData{}
-		if err := json.Unmarshal(e.Cmd, dataKV); err != nil {
+
+		//dataKV := &
+		op := &OPLog{KVData: KVData{}}
+		if err := json.Unmarshal(e.Cmd, op); err != nil {
 			return nil, err
 		}
-		switch dataKV.OP {
+		switch op.OP {
 		case PUT:
-			if err := wb.Set([]byte(dataKV.Key), dataKV.Val, db.wo); err != nil {
+			//wb.Set()
+			if err := wb.Set([]byte(op.KVData.Key), op.KVData.Val, db.wo); err != nil {
 				ents[idx].Result = sm.Result{}
 				continue
 			}
 			ents[idx].Result = sm.Result{Value: uint64(len(ents[idx].Cmd))}
 		case DELETE:
-			if err := wb.Delete([]byte(dataKV.Key), db.wo); err != nil {
+			if err := wb.Delete([]byte(op.KVData.Key), db.wo); err != nil {
 				ents[idx].Result = sm.Result{}
 				continue
 			}
@@ -627,13 +623,15 @@ func (d *DiskKV) saveToWriter(db *pebbledb,
 	ss *pebble.Snapshot, w io.Writer) error {
 	iter := ss.NewIter(db.ro)
 	defer iter.Close()
-	values := make([]*KVData, 0)
+	values := make([]*OPLog, 0)
 	for iter.First(); iteratorIsValid(iter); iter.Next() {
-		kv := &KVData{
-			Key: string(iter.Key()),
-			Val: iter.Value(),
+		op := &OPLog{
+			KVData: KVData{
+				Key: string(iter.Key()),
+				Val: iter.Value(),
+			},
 		}
-		values = append(values, kv)
+		values = append(values, op)
 	}
 	count := uint64(len(values))
 	sz := make([]byte, 8)
@@ -711,11 +709,11 @@ func (d *DiskKV) RecoverFromSnapshot(r io.Reader,
 		if _, err := io.ReadFull(r, data); err != nil {
 			return err
 		}
-		dataKv := &KVData{}
-		if err := json.Unmarshal(data, dataKv); err != nil {
+		op := &OPLog{KVData: KVData{}}
+		if err := json.Unmarshal(data, op); err != nil {
 			return err
 		}
-		wb.Set([]byte(dataKv.Key), dataKv.Val, db.wo)
+		wb.Set([]byte(op.KVData.Key), op.KVData.Val, db.wo)
 	}
 	if err := db.db.Apply(wb, db.syncwo); err != nil {
 		return err
