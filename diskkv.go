@@ -66,6 +66,7 @@ func init() {
 	if runtime.GOOS == "darwin" {
 		signal.Ignore(syscall.Signal(0xd))
 	}
+	log.SetOutput(os.Stderr)
 }
 
 func raftConfig(nodeID uint64) config.Config {
@@ -114,7 +115,8 @@ func Run() error {
 	}
 
 	if err := nh.StartOnDiskCluster(Addresses, join, NewDiskKV, rc); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to add cluster, %v\n", err)
+		log.Printf("failed to add cluster, %v\n", err)
+		log.Println()
 		return err
 	}
 	raftStopper := syncutil.NewStopper()
@@ -137,7 +139,7 @@ func Run() error {
 				// get key
 				rt, key, val, ok := ParseCommand(msg)
 				if !ok {
-					fmt.Fprintf(os.Stderr, "invalid input\n")
+					log.Printf("invalid input\n")
 					continue
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -155,31 +157,31 @@ func Run() error {
 					op.OP = DELETE
 					data, err := json.Marshal(op)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "Update Marhsal returned error %v\n", err)
+						log.Printf("Update Marhsal returned error %v\n", err)
 						continue
 					}
 					_, err = nh.SyncPropose(ctx, cs, data)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "SyncPropose returned error %v\n", err)
+						log.Printf("SyncPropose returned error %v\n", err)
 						continue
 					}
 				case PUT:
 					op.OP = PUT
 					data, err := json.Marshal(op)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "Update Marhsal returned error %v\n", err)
+						log.Printf("Update Marhsal returned error %v\n", err)
 						continue
 					}
 					_, err = nh.SyncPropose(ctx, cs, data)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "SyncPropose returned error %v\n", err)
+						log.Printf("SyncPropose returned error %v\n", err)
 						continue
 					}
 				case GET:
 					op.OP = GET
 					result, err := nh.SyncRead(ctx, clusterID, []byte(key))
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "SyncRead returned error %v\n", err)
+						log.Printf("SyncRead returned error %v\n", err)
 						continue
 					} else {
 						fmt.Fprintf(os.Stdout, "query key: %s, result: %s\n", key, result)
@@ -256,7 +258,12 @@ func (r *pebbledb) lookup(query []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer closer.Close()
+	defer func(closer io.Closer) {
+		cerr := closer.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}(closer)
 	if len(val) == 0 {
 		return []byte(""), nil
 	}
@@ -401,7 +408,10 @@ func createNodeDataDir(dir string) error {
 }
 
 func cleanupNodeDataDir(dir string) error {
-	os.RemoveAll(filepath.Join(dir, updatingDBFilename))
+	err := os.RemoveAll(filepath.Join(dir, updatingDBFilename))
+	if err != nil {
+		return err
+	}
 	dbdir, err := getCurrentDBDirName(dir)
 	if err != nil {
 		return err
@@ -455,7 +465,7 @@ func (d *DiskKV) queryAppliedIndex(db *pebbledb) (uint64, error) {
 	}
 	defer func() {
 		if closer != nil {
-			closer.Close()
+			err = closer.Close()
 		}
 	}()
 	if len(val) == 0 {
@@ -541,7 +551,9 @@ func (d *DiskKV) Update(ents []sm.Entry) ([]sm.Entry, error) {
 	}
 	db := (*pebbledb)(atomic.LoadPointer(&d.db))
 	wb := db.db.NewBatch()
-	defer wb.Close()
+	defer func(wb *pebble.Batch) {
+		_ = wb.Close()
+	}(wb)
 	for idx, e := range ents {
 
 		//dataKV := &
@@ -622,7 +634,9 @@ func iteratorIsValid(iter *pebble.Iterator) bool {
 func (d *DiskKV) saveToWriter(db *pebbledb,
 	ss *pebble.Snapshot, w io.Writer) error {
 	iter := ss.NewIter(db.ro)
-	defer iter.Close()
+	defer func(iter *pebble.Iterator) {
+		_ = iter.Close()
+	}(iter)
 	values := make([]*OPLog, 0)
 	for iter.First(); iteratorIsValid(iter); iter.Next() {
 		op := &OPLog{
