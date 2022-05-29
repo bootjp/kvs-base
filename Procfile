@@ -1,4 +1,6 @@
 # Use goreman to run `go get github.com/mattn/goreman`
-raftexample1: ./kvs-infrastructure --id 1 --cluster http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 12380
-raftexample2: ./kvs-infrastructure --id 2 --cluster http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 22380
-raftexample3: ./kvs-infrastructure --id 3 --cluster http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 32380
+
+node1: ./kvs-infrastructure --raft_bootstrap --raft_id=nodeA --address=localhost:50051 --raft_data_dir /tmp/my-raft-cluster
+node2: ./kvs-infrastructure --raft_id=nodeB --address=localhost:50052 --raft_data_dir /tmp/my-raft-cluster
+node3: ./kvs-infrastructure --raft_id=nodeC --address=localhost:50053 --raft_data_dir /tmp/my-raft-cluster
+
