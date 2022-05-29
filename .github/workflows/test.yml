@@ -12,6 +12,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v3
+      - run: go install github.com/mattn/goreman@latest
       - run: make build
       - run: make run
       - run: go test ./...
