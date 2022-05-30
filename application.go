@@ -135,7 +135,7 @@ type RPCInterface struct {
 	Raft *raft.Raft
 }
 
-func (r RPCInterface) DeleteData(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (r RPCInterface) DeleteData(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.DeleteResponse{
 			Status:      pb.Status_ABORT,
@@ -168,7 +168,7 @@ func (r RPCInterface) DeleteData(ctx context.Context, req *pb.DeleteRequest) (*p
 	}, nil
 }
 
-func (r RPCInterface) AddData(ctx context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
+func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.AddDataResponse{
 			Status:      pb.Status_ABORT,
@@ -201,12 +201,11 @@ func (r RPCInterface) AddData(ctx context.Context, req *pb.AddDataRequest) (*pb.
 	}, nil
 }
 
-func (r RPCInterface) GetData(ctx context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
+func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
 	r.KVS.mtx.RLock()
 	defer r.KVS.mtx.RUnlock()
 
 	if len(req.GetKey()) > KeyLimit {
-		// todo handling error response
 		return &pb.GetDataResponse{
 			Key:         req.Key,
 			Data:        nil,
@@ -219,7 +218,6 @@ func (r RPCInterface) GetData(ctx context.Context, req *pb.GetDataRequest) (*pb.
 	copy(tmp[:], req.Key)
 
 	v, ok := r.KVS.data[tmp]
-	fmt.Println(ok, v)
 	if !ok {
 		return &pb.GetDataResponse{
 			Key:         req.Key,
