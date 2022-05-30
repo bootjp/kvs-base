@@ -71,7 +71,7 @@ func main() {
 
 const maxSnapshot = 3
 
-func NewRaft(ctx context.Context, myID, myAddress string, fsm raft.FSM) (*raft.Raft, *transport.Manager, error) {
+func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM) (*raft.Raft, *transport.Manager, error) {
 	c := raft.DefaultConfig()
 	c.LocalID = raft.ServerID(myID)
 

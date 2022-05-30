@@ -26,15 +26,18 @@ type Pair struct {
 
 type KV map[[KeyLimit]byte]*Pair
 
+// check raft.FSM impl
+var _ raft.FSM = &KVS{}
+
 type KVS struct {
 	mtx  sync.RWMutex
 	data KV
 }
 
 func NewKVS() *KVS {
-	wt := &KVS{}
-	wt.data = map[[KeyLimit]byte]*Pair{}
-	return wt
+	s := &KVS{}
+	s.data = map[[KeyLimit]byte]*Pair{}
+	return s
 }
 
 func EncodePair(p Pair) ([]byte, error) {
@@ -60,8 +63,6 @@ func DecodePair(b []byte) (Pair, error) {
 	return pair, nil
 }
 
-var _ raft.FSM = &KVS{}
-
 func cloneKV(kv KV) KV {
 	cloned := KV{}
 
@@ -75,7 +76,6 @@ func cloneKV(kv KV) KV {
 func (f *KVS) Apply(l *raft.Log) interface{} {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	// real kv data
 	p, err := DecodePair(l.Data)
 	if err != nil {
 		log.Println(err)
