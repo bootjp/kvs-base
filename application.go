@@ -22,6 +22,12 @@ type Pair struct {
 	Key      *[KeyLimit]byte
 	Value    *[]byte
 	IsDelete bool
+	Expire   Expire
+}
+
+type Expire struct {
+	Time     time.Time
+	NoExpire bool
 }
 
 type KV map[[KeyLimit]byte]*Pair
@@ -82,6 +88,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	}
 
 	if p.IsDelete {
+		log.Println("delete", *p.Key)
 		delete(f.data, *p.Key)
 		return nil
 	}
@@ -133,6 +140,43 @@ func (s *snapshot) Release() {}
 type RPCInterface struct {
 	KVS  *KVS
 	Raft *raft.Raft
+	gcc  chan Pair
+}
+
+func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
+	r := &RPCInterface{
+		KVS:  kvs,
+		Raft: raft,
+		gcc:  make(chan Pair, 10000),
+	}
+	go (func(r *RPCInterface) {
+		fmt.Println("run gc")
+		select {
+		case v := <-r.gcc:
+			v.IsDelete = true
+			e, err := EncodePair(v)
+			if err != nil {
+				log.Println(err)
+			}
+			fmt.Println("apply delete")
+			_ = r.Raft.Apply(e, time.Second)
+		}
+	})(r)
+	return r
+}
+
+func TTLtoTime(d time.Duration) Expire {
+	switch d.Milliseconds() {
+	default:
+		return Expire{
+			Time: time.Now().Add(d),
+		}
+	case 0:
+		return Expire{
+			NoExpire: true,
+		}
+	}
+
 }
 
 func (r RPCInterface) DeleteData(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -179,7 +223,7 @@ func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.Ad
 	var tmp [KeyLimit]byte
 	copy(tmp[:], req.Key)
 
-	pair := Pair{Key: &tmp, Value: &req.Data}
+	pair := Pair{Key: &tmp, Value: &req.Data, Expire: TTLtoTime(req.GetTtl().AsDuration())}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.AddDataResponse{
@@ -219,6 +263,17 @@ func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.Ge
 
 	v, ok := r.KVS.data[tmp]
 	if !ok {
+		return &pb.GetDataResponse{
+			Key:         req.Key,
+			Data:        nil,
+			Error:       pb.GetDataError_DATA_NOT_FOUND,
+			ReadAtIndex: r.Raft.AppliedIndex(),
+		}, nil
+	}
+
+	// check expire
+	if !v.Expire.NoExpire && time.Now().After(v.Expire.Time) {
+		r.gcc <- *v
 		return &pb.GetDataResponse{
 			Key:         req.Key,
 			Data:        nil,

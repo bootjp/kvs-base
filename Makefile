@@ -4,7 +4,7 @@ build: clean
 	go build -o kvs-infrastructure ./cmd/main.go
 
 clean:
-	rm -fr raftexample-*
+	rm -rf /tmp/my-raft-cluster/
 	rm -f ./kvs-infrastructure
 stop:
 	-@killall kvs-infrastructure

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/duration.proto";
+
 option go_package = "github.com/bootjp/kvs/proto";
 
 service KVS {
@@ -11,6 +13,7 @@ service KVS {
 message AddDataRequest {
 	bytes key = 1;
 	bytes data = 2;
+	google.protobuf.Duration ttl = 3;
 }
 
 enum Status {
