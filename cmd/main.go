@@ -34,7 +34,6 @@ var (
 )
 
 func main() {
-	//flag.CommandLine
 	flag.Parse()
 
 	if *raftId == "" {
@@ -70,6 +69,8 @@ func main() {
 	}
 }
 
+const maxSnapshot = 3
+
 func NewRaft(ctx context.Context, myID, myAddress string, fsm raft.FSM) (*raft.Raft, *transport.Manager, error) {
 	c := raft.DefaultConfig()
 	c.LocalID = raft.ServerID(myID)
@@ -79,9 +80,9 @@ func NewRaft(ctx context.Context, myID, myAddress string, fsm raft.FSM) (*raft.R
 	ldb := raft.NewInmemStore()
 	sdb := raft.NewInmemStore()
 
-	fss, err := raft.NewFileSnapshotStore(baseDir, 3, os.Stderr)
+	fss, err := raft.NewFileSnapshotStore(baseDir, maxSnapshot, os.Stderr)
 	if err != nil {
-		return nil, nil, fmt.Errorf(`raft.NewFileSnapshotStore(%q, ...): %v`, baseDir, err)
+		return nil, nil, fmt.Errorf(`raft.NewFileSnapshotStore(%q, ...): %w`, baseDir, err)
 	}
 
 	tm := transport.New(raft.ServerAddress(myAddress), []grpc.DialOption{
@@ -90,7 +91,7 @@ func NewRaft(ctx context.Context, myID, myAddress string, fsm raft.FSM) (*raft.R
 
 	r, err := raft.NewRaft(c, fsm, ldb, sdb, fss, tm.Transport())
 	if err != nil {
-		return nil, nil, fmt.Errorf("raft.NewRaft: %v", err)
+		return nil, nil, fmt.Errorf("raft.NewRaft: %w", err)
 	}
 
 	if *raftBootstrap {
@@ -105,7 +106,7 @@ func NewRaft(ctx context.Context, myID, myAddress string, fsm raft.FSM) (*raft.R
 		}
 		f := r.BootstrapCluster(cfg)
 		if err := f.Error(); err != nil {
-			return nil, nil, fmt.Errorf("raft.Raft.BootstrapCluster: %v", err)
+			return nil, nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)
 		}
 	}
 

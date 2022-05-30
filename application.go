@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -40,9 +41,8 @@ func EncodePair(p Pair) ([]byte, error) {
 	b := &bytes.Buffer{}
 	e := gob.NewEncoder(b)
 
-	err := e.Encode(p)
-	if err != nil {
-		return nil, fmt.Errorf("failed data encode: %v", err)
+	if err := e.Encode(p); err != nil {
+		return nil, fmt.Errorf("failed data encode: %w", err)
 	}
 
 	return b.Bytes(), nil
@@ -53,9 +53,8 @@ func DecodePair(b []byte) (Pair, error) {
 	bv := bytes.NewBuffer(b)
 	d := gob.NewDecoder(bv)
 
-	err := d.Decode(&pair)
-	if err != nil {
-		return Pair{}, fmt.Errorf("failed restore: %v", err)
+	if err := d.Decode(&pair); err != nil {
+		return Pair{}, fmt.Errorf("failed restore: %w", err)
 	}
 
 	return pair, nil
@@ -79,7 +78,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	// real kv data
 	p, err := DecodePair(l.Data)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	if p.IsDelete {
@@ -101,9 +100,8 @@ func (f *KVS) Restore(r io.ReadCloser) error {
 	var decodedMap KV
 	d := gob.NewDecoder(r)
 
-	err := d.Decode(&decodedMap)
-	if err != nil {
-		return fmt.Errorf("failed restore: %v", err)
+	if err := d.Decode(&decodedMap); err != nil {
+		return fmt.Errorf("failed restore: %w", err)
 	}
 
 	return nil
@@ -119,15 +117,15 @@ func (s *snapshot) Persist(sink raft.SnapshotSink) error {
 
 	err := e.Encode(s.data)
 	if err != nil {
-		return fmt.Errorf("failed data encode: %v", err)
+		return fmt.Errorf("failed data encode: %w", err)
 	}
 
 	_, err = sink.Write(b.Bytes())
 	if err != nil {
 		_ = sink.Cancel()
-		return fmt.Errorf("sink.Write(): %v", err)
+		return fmt.Errorf("sink.Write(): %w", err)
 	}
-	return sink.Close()
+	return errors.Unwrap(sink.Close())
 }
 
 func (s *snapshot) Release() {}
@@ -146,7 +144,7 @@ func (r RPCInterface) DeleteData(ctx context.Context, req *pb.DeleteRequest) (*p
 	}
 
 	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key[:])
+	copy(tmp[:], req.Key)
 
 	pair := Pair{Key: &tmp, Value: nil, IsDelete: true}
 	e, err := EncodePair(pair)
@@ -161,7 +159,7 @@ func (r RPCInterface) DeleteData(ctx context.Context, req *pb.DeleteRequest) (*p
 		return &pb.DeleteResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
-		}, rafterrors.MarkRetriable(err)
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
 	}
 
 	return &pb.DeleteResponse{
@@ -179,7 +177,7 @@ func (r RPCInterface) AddData(ctx context.Context, req *pb.AddDataRequest) (*pb.
 	}
 
 	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key[:])
+	copy(tmp[:], req.Key)
 
 	pair := Pair{Key: &tmp, Value: &req.Data}
 	e, err := EncodePair(pair)
@@ -194,7 +192,7 @@ func (r RPCInterface) AddData(ctx context.Context, req *pb.AddDataRequest) (*pb.
 		return &pb.AddDataResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
-		}, rafterrors.MarkRetriable(err)
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
 	}
 
 	return &pb.AddDataResponse{
@@ -218,7 +216,7 @@ func (r RPCInterface) GetData(ctx context.Context, req *pb.GetDataRequest) (*pb.
 	}
 
 	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key[:])
+	copy(tmp[:], req.Key)
 
 	v, ok := r.KVS.data[tmp]
 	fmt.Println(ok, v)
