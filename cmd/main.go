@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"path/filepath"
 
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -25,6 +23,12 @@ import (
 
 	_ "github.com/Jille/grpc-multi-resolver"
 )
+
+func init() {
+	// suppress linter for develop
+	_ = raftDir
+	_ = maxSnapshot
+}
 
 var (
 	myAddr        = flag.String("address", "localhost:50051", "TCP host+port for this node")
@@ -72,15 +76,15 @@ func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM) (*raft.Raf
 	c := raft.DefaultConfig()
 	c.LocalID = raft.ServerID(myID)
 
-	baseDir := filepath.Join(*raftDir, myID)
-
+	// this config is for development
 	ldb := raft.NewInmemStore()
 	sdb := raft.NewInmemStore()
-
-	fss, err := raft.NewFileSnapshotStore(baseDir, maxSnapshot, os.Stderr)
-	if err != nil {
-		return nil, nil, fmt.Errorf(`raft.NewFileSnapshotStore(%q, ...): %w`, baseDir, err)
-	}
+	fss := raft.NewInmemSnapshotStore()
+	// baseDir := filepath.Join(*raftDir, myID)
+	// fss, err := raft.NewFileSnapshotStore(baseDir, maxSnapshot, os.Stderr)
+	// if err != nil {
+	// 	return nil, nil, fmt.Errorf(`raft.NewFileSnapshotStore(%q, ...): %w`, baseDir, err)
+	// }
 
 	tm := transport.New(raft.ServerAddress(myAddress), []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -30,14 +31,22 @@ type Expire struct {
 	NoExpire bool
 }
 
+func (e *Expire) Expire(t time.Time) bool {
+	if e.NoExpire {
+		return false
+	}
+	return t.After(e.Time)
+}
+
 type KV map[[KeyLimit]byte]*Pair
 
 // check raft.FSM impl
 var _ raft.FSM = &KVS{}
 
 type KVS struct {
-	mtx  sync.RWMutex
-	data KV
+	mtx    sync.RWMutex
+	data   KV
+	expire []*Pair
 }
 
 func NewKVS() *KVS {
@@ -70,10 +79,13 @@ func DecodePair(b []byte) (Pair, error) {
 }
 
 func cloneKV(kv KV) KV {
+	t := time.Now().UTC()
 	cloned := KV{}
 
 	for k, v := range kv {
-		cloned[k] = v
+		if !v.Expire.Expire(t) {
+			cloned[k] = v
+		}
 	}
 
 	return cloned
@@ -94,6 +106,12 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	}
 
 	f.data[*p.Key] = &p
+	if !p.Expire.NoExpire {
+		f.expire = append(f.expire, &p)
+		sort.SliceStable(f.expire, func(i, j int) bool {
+			return f.expire[i].Expire.Time.Nanosecond() > f.expire[j].Expire.Time.Nanosecond()
+		})
+	}
 
 	return nil
 }
