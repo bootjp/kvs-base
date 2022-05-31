@@ -88,7 +88,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	}
 
 	if p.IsDelete {
-		log.Println("delete", *p.Key)
+		debugLog("delete", *p.Key)
 		delete(f.data, *p.Key)
 		return nil
 	}
@@ -138,27 +138,34 @@ func (s *snapshot) Persist(sink raft.SnapshotSink) error {
 func (s *snapshot) Release() {}
 
 type RPCInterface struct {
-	KVS  *KVS
-	Raft *raft.Raft
-	gcc  chan Pair
+	KVS         *KVS
+	Raft        *raft.Raft
+	gcc         chan Pair
+	Environment string
+}
+
+const gcMaxBuffer = 65534
+
+func debugLog(a ...any) {
+	log.Println(a...)
 }
 
 func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
 	r := &RPCInterface{
 		KVS:  kvs,
 		Raft: raft,
-		gcc:  make(chan Pair, 10000),
+		gcc:  make(chan Pair, gcMaxBuffer),
 	}
 	go (func(r *RPCInterface) {
-		fmt.Println("run gc")
-		select {
-		case v := <-r.gcc:
+		debugLog("run gc")
+		for {
+			v := <-r.gcc
 			v.IsDelete = true
 			e, err := EncodePair(v)
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Println("apply delete")
+			debugLog("apply delete")
 			_ = r.Raft.Apply(e, time.Second)
 		}
 	})(r)
