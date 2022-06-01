@@ -163,6 +163,8 @@ func debugLog(a ...any) {
 	log.Println(a...)
 }
 
+const gcInterval = 500 * time.Millisecond
+
 func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
 	r := &RPCInterface{
 		KVS:  kvs,
@@ -171,7 +173,7 @@ func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
 	}
 	go (func(r *RPCInterface) {
 		debugLog("run gc")
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(gcInterval)
 		for {
 			select {
 			case v := <-r.gcc:
