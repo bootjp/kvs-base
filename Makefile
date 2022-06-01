@@ -11,3 +11,6 @@ stop:
 
 run: stop build
 	goreman start
+
+test:
+	go test ./...

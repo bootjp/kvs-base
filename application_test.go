@@ -120,6 +120,21 @@ func TestTTL(t *testing.T) {
 	}
 }
 
+func TestGC(t *testing.T) {
+	c := client()
+	key := []byte("test-key")
+	want := []byte("test-data")
+	_, err := c.AddData(
+		context.Background(),
+		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+	)
+	if err != nil {
+		log.Fatalf("AddWord RPC failed: %v", err)
+	}
+
+	// todo check gc log
+}
+
 func client() pb.KVSClient {
 	retryOpts := []grpcretry.CallOption{
 		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),

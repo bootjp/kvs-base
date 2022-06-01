@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"sort"
 	"sync"
 	"time"
 
@@ -46,12 +45,13 @@ var _ raft.FSM = &KVS{}
 type KVS struct {
 	mtx    sync.RWMutex
 	data   KV
-	expire []*Pair
+	expire KV
 }
 
 func NewKVS() *KVS {
 	s := &KVS{}
 	s.data = map[[KeyLimit]byte]*Pair{}
+	s.expire = map[[KeyLimit]byte]*Pair{}
 	return s
 }
 
@@ -79,13 +79,10 @@ func DecodePair(b []byte) (Pair, error) {
 }
 
 func cloneKV(kv KV) KV {
-	t := time.Now().UTC()
 	cloned := KV{}
 
 	for k, v := range kv {
-		if !v.Expire.Expire(t) {
-			cloned[k] = v
-		}
+		cloned[k] = v
 	}
 
 	return cloned
@@ -102,15 +99,13 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	if p.IsDelete {
 		debugLog("delete", *p.Key)
 		delete(f.data, *p.Key)
+		delete(f.expire, *p.Key)
 		return nil
 	}
 
 	f.data[*p.Key] = &p
 	if !p.Expire.NoExpire {
-		f.expire = append(f.expire, &p)
-		sort.SliceStable(f.expire, func(i, j int) bool {
-			return f.expire[i].Expire.Time.Nanosecond() > f.expire[j].Expire.Time.Nanosecond()
-		})
+		f.expire[*p.Key] = &p
 	}
 
 	return nil
@@ -176,15 +171,29 @@ func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
 	}
 	go (func(r *RPCInterface) {
 		debugLog("run gc")
+		ticker := time.NewTicker(500 * time.Millisecond)
 		for {
-			v := <-r.gcc
-			v.IsDelete = true
-			e, err := EncodePair(v)
-			if err != nil {
-				log.Println(err)
+			select {
+			case v := <-r.gcc:
+				v.IsDelete = true
+				e, err := EncodePair(v)
+				if err != nil {
+					log.Println(err)
+				}
+				debugLog("apply delete")
+				_ = r.Raft.Apply(e, time.Second)
+			case <-ticker.C:
+				now := time.Now().UTC()
+				r.KVS.mtx.RLock()
+				for _, pair := range r.KVS.expire {
+					if !pair.Expire.Expire(now) {
+						continue
+					}
+					debugLog("detect expire key", pair)
+					r.gcc <- *pair
+				}
+				r.KVS.mtx.RUnlock()
 			}
-			debugLog("apply delete")
-			_ = r.Raft.Apply(e, time.Second)
 		}
 	})(r)
 	return r
