@@ -22,6 +22,19 @@ type Pair struct {
 	Key      *[KeyLimit]byte
 	Value    *[]byte
 	IsDelete bool
+	Expire   Expire
+}
+
+type Expire struct {
+	Time     time.Time
+	NoExpire bool
+}
+
+func (e *Expire) Expire(t time.Time) bool {
+	if e.NoExpire {
+		return false
+	}
+	return t.After(e.Time)
 }
 
 type KV map[[KeyLimit]byte]*Pair
@@ -30,13 +43,15 @@ type KV map[[KeyLimit]byte]*Pair
 var _ raft.FSM = &KVS{}
 
 type KVS struct {
-	mtx  sync.RWMutex
-	data KV
+	mtx    sync.RWMutex
+	data   KV
+	expire KV
 }
 
 func NewKVS() *KVS {
 	s := &KVS{}
 	s.data = map[[KeyLimit]byte]*Pair{}
+	s.expire = map[[KeyLimit]byte]*Pair{}
 	return s
 }
 
@@ -81,12 +96,18 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 		log.Println(err)
 	}
 
+	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
 	if p.IsDelete {
+		debugLog("delete", *p.Key)
 		delete(f.data, *p.Key)
+		delete(f.expire, *p.Key)
 		return nil
 	}
 
 	f.data[*p.Key] = &p
+	if !p.Expire.NoExpire {
+		f.expire[*p.Key] = &p
+	}
 
 	return nil
 }
@@ -131,8 +152,68 @@ func (s *snapshot) Persist(sink raft.SnapshotSink) error {
 func (s *snapshot) Release() {}
 
 type RPCInterface struct {
-	KVS  *KVS
-	Raft *raft.Raft
+	KVS         *KVS
+	Raft        *raft.Raft
+	gcc         chan Pair
+	Environment string
+}
+
+const gcMaxBuffer = 65534
+
+func debugLog(a ...any) {
+	log.Println(a...)
+}
+
+const gcInterval = 500 * time.Millisecond
+
+func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
+	r := &RPCInterface{
+		KVS:  kvs,
+		Raft: raft,
+		gcc:  make(chan Pair, gcMaxBuffer),
+	}
+	go (func(r *RPCInterface) {
+		debugLog("run gc")
+		ticker := time.NewTicker(gcInterval)
+		for {
+			select {
+			case v := <-r.gcc:
+				v.IsDelete = true
+				e, err := EncodePair(v)
+				if err != nil {
+					log.Println(err)
+				}
+				debugLog("apply delete")
+				_ = r.Raft.Apply(e, time.Second)
+			case <-ticker.C:
+				now := time.Now().UTC()
+				r.KVS.mtx.RLock()
+				for _, pair := range r.KVS.expire {
+					if !pair.Expire.Expire(now) {
+						continue
+					}
+					debugLog("detect expire key", pair)
+					r.gcc <- *pair
+				}
+				r.KVS.mtx.RUnlock()
+			}
+		}
+	})(r)
+	return r
+}
+
+func TTLtoTime(d time.Duration) Expire {
+	switch d.Milliseconds() {
+	default:
+		return Expire{
+			Time: time.Now().UTC().Add(d),
+		}
+	case 0:
+		return Expire{
+			NoExpire: true,
+		}
+	}
+
 }
 
 func (r RPCInterface) DeleteData(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -179,7 +260,7 @@ func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.Ad
 	var tmp [KeyLimit]byte
 	copy(tmp[:], req.Key)
 
-	pair := Pair{Key: &tmp, Value: &req.Data}
+	pair := Pair{Key: &tmp, Value: &req.Data, Expire: TTLtoTime(req.GetTtl().AsDuration())}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.AddDataResponse{
@@ -219,6 +300,17 @@ func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.Ge
 
 	v, ok := r.KVS.data[tmp]
 	if !ok {
+		return &pb.GetDataResponse{
+			Key:         req.Key,
+			Data:        nil,
+			Error:       pb.GetDataError_DATA_NOT_FOUND,
+			ReadAtIndex: r.Raft.AppliedIndex(),
+		}, nil
+	}
+
+	// check expire
+	if !v.Expire.NoExpire && v.Expire.Expire(time.Now().UTC()) {
+		r.gcc <- *v
 		return &pb.GetDataResponse{
 			Key:         req.Key,
 			Data:        nil,

@@ -2,12 +2,13 @@ package kvs
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"reflect"
 	"strconv"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 
@@ -53,10 +54,8 @@ func TestDelete(t *testing.T) {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
 	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
-		t.Fatalf("Delete test failed: %v", resp.Data)
+		t.Fatalf("Delete test failed: %v %v", resp.Data, resp.Error)
 	}
-
-	t.Log(want, "check ok")
 
 }
 
@@ -65,7 +64,6 @@ func TestConsistency(t *testing.T) {
 
 	key := []byte("test-key")
 
-	fmt.Println("inlop")
 	for i := 0; i < 99999; i++ {
 		want := []byte(strconv.Itoa(i))
 		_, err := c.AddData(
@@ -89,7 +87,52 @@ func TestConsistency(t *testing.T) {
 		}
 		t.Log(want, "check ok")
 	}
+}
 
+func TestTTL(t *testing.T) {
+	c := client()
+	key := []byte("test-key")
+	want := []byte("test-data")
+	_, err := c.AddData(
+		context.Background(),
+		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+	)
+	if err != nil {
+		log.Fatalf("AddWord RPC failed: %v", err)
+	}
+	time.Sleep(9 * time.Second)
+	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	if err != nil {
+		t.Fatalf("GetWords RPC failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(want, resp.Data) {
+		t.Fatalf("consistency check failed want %v got %v", want, resp.Data)
+	}
+
+	time.Sleep(1 * time.Second)
+	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	if err != nil {
+		t.Fatalf("GetWords RPC failed: %v", err)
+	}
+	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
+		t.Fatalf("Delete test failed: %v", resp.Data)
+	}
+}
+
+func TestGC(t *testing.T) {
+	c := client()
+	key := []byte("test-key")
+	want := []byte("test-data")
+	_, err := c.AddData(
+		context.Background(),
+		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+	)
+	if err != nil {
+		log.Fatalf("AddWord RPC failed: %v", err)
+	}
+
+	// todo check gc log
 }
 
 func client() pb.KVSClient {
