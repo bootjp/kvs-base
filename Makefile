@@ -14,3 +14,5 @@ run: stop build
 
 test:
 	go test ./...
+	golangci-lint run
+

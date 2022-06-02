@@ -96,6 +96,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 		log.Println(err)
 	}
 
+	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
 	if p.IsDelete {
 		debugLog("delete", *p.Key)
 		delete(f.data, *p.Key)
