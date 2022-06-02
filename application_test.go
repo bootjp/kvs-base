@@ -54,7 +54,7 @@ func TestDelete(t *testing.T) {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
 	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
-		t.Fatalf("Delete test failed: %v", resp.Data)
+		t.Fatalf("Delete test failed: %v %v", resp.Data, resp.Error)
 	}
 
 }

@@ -205,7 +205,7 @@ func TTLtoTime(d time.Duration) Expire {
 	switch d.Milliseconds() {
 	default:
 		return Expire{
-			Time: time.Now().Add(d),
+			Time: time.Now().UTC().Add(d),
 		}
 	case 0:
 		return Expire{
@@ -308,7 +308,7 @@ func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.Ge
 	}
 
 	// check expire
-	if !v.Expire.NoExpire && time.Now().After(v.Expire.Time) {
+	if !v.Expire.NoExpire && v.Expire.Expire(time.Now().UTC()) {
 		r.gcc <- *v
 		return &pb.GetDataResponse{
 			Key:         req.Key,
