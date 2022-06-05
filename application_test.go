@@ -2,7 +2,10 @@ package kvs
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net"
+	"os"
 	"reflect"
 	"strconv"
 	"testing"
@@ -15,12 +18,76 @@ import (
 	pb "github.com/bootjp/kvs/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 
 	_ "github.com/Jille/grpc-multi-resolver"
+	"github.com/Jille/raft-grpc-leader-rpc/leaderhealth"
+	"github.com/Jille/raftadmin"
 	_ "google.golang.org/grpc/health"
 )
 
-func TestDelete(t *testing.T) {
+var hostformat = "localhost:5000%d"
+
+var kvs []*KVS
+var node []*grpc.Server
+
+func TestMain(m *testing.M) {
+	_ = createNode(3)
+	fmt.Println("finish create node")
+	code := m.Run()
+	shutdown()
+	os.Exit(code)
+}
+
+func shutdown() {
+	for _, server := range node {
+		server.Stop()
+	}
+}
+
+func createNode(n int) []*grpc.Server {
+
+	for i := 0; i < n; i++ {
+		ctx := context.Background()
+		fmt.Println("create node", fmt.Sprintf(hostformat, i))
+		addr := fmt.Sprintf(hostformat, i)
+		_, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			log.Fatalf("failed to parse local address (%q): %v", fmt.Sprintf(hostformat, i), err)
+		}
+		sock, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		store := NewKVS()
+		kvs = append(kvs, store)
+		r, tm, err := NewRaft(ctx, strconv.Itoa(i), addr, store, i == 0)
+		if err != nil {
+			log.Fatalf("failed to start raft: %v", err)
+		}
+		s := grpc.NewServer()
+		pb.RegisterKVSServer(s, NewRPCInterface(store, r))
+		tm.Register(s)
+		leaderhealth.Setup(r, s, []string{"Example"})
+		raftadmin.Register(s, r)
+		reflection.Register(s)
+
+		node = append(node, s)
+		go func() {
+			if err := s.Serve(sock); err != nil {
+				log.Fatalf("failed to serve: %v", err)
+			}
+		}()
+	}
+
+	time.Sleep(3 * time.Second)
+
+	return node
+}
+
+func Test_value_can_be_deleted(t *testing.T) {
+
 	c := client()
 	key := []byte("test-key")
 	want := []byte("v")
@@ -59,7 +126,7 @@ func TestDelete(t *testing.T) {
 
 }
 
-func TestConsistency(t *testing.T) {
+func Test_consistency_satisfy_write_after_read(t *testing.T) {
 	c := client()
 
 	key := []byte("test-key")
@@ -89,7 +156,7 @@ func TestConsistency(t *testing.T) {
 	}
 }
 
-func TestTTL(t *testing.T) {
+func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	c := client()
 	key := []byte("test-key")
 	want := []byte("test-data")
@@ -120,7 +187,7 @@ func TestTTL(t *testing.T) {
 	}
 }
 
-func TestGC(t *testing.T) {
+func Test_no_data_in_map_after_gc(t *testing.T) {
 	c := client()
 	key := []byte("test-key")
 	want := []byte("test-data")
@@ -131,7 +198,17 @@ func TestGC(t *testing.T) {
 	if err != nil {
 		log.Fatalf("AddWord RPC failed: %v", err)
 	}
+	var tmp [KeyLimit]byte
+	copy(tmp[:], key)
 
+	time.Sleep(30 * time.Second)
+
+	for nodeIndex, kv := range kvs {
+		v, ok := kv.data[tmp]
+		if ok {
+			t.Fatalf("gc failed %d got %v now time : %v", nodeIndex, v, time.Now().UTC())
+		}
+	}
 	// todo check gc log
 }
 
@@ -140,7 +217,7 @@ func client() pb.KVSClient {
 		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
 		grpcretry.WithMax(1),
 	}
-	conn, err := grpc.Dial("multi:///localhost:50051,localhost:50052,localhost:50053",
+	conn, err := grpc.Dial("multi:///localhost:50000,localhost:50001,localhost:50002",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 		grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(retryOpts...)))

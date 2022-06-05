@@ -7,16 +7,12 @@ import (
 	"log"
 	"net"
 
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/bootjp/kvs"
 	pb "github.com/bootjp/kvs/proto"
 
 	"github.com/Jille/raftadmin"
 
 	"github.com/Jille/raft-grpc-leader-rpc/leaderhealth"
-	transport "github.com/Jille/raft-grpc-transport"
-	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
 	_ "google.golang.org/grpc/health"
 	"google.golang.org/grpc/reflection"
@@ -25,9 +21,8 @@ import (
 )
 
 func init() {
-	// suppress linter for develop
+	// todo suppress linter for develop
 	_ = raftDir
-	_ = maxSnapshot
 }
 
 var (
@@ -55,7 +50,7 @@ func main() {
 	}
 
 	store := kvs.NewKVS()
-	r, tm, err := NewRaft(ctx, *raftId, *myAddr, store)
+	r, tm, err := kvs.NewRaft(ctx, *raftId, *myAddr, store, *raftBootstrap)
 	if err != nil {
 		log.Fatalf("failed to start raft: %v", err)
 	}
@@ -68,48 +63,4 @@ func main() {
 	if err := s.Serve(sock); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-}
-
-const maxSnapshot = 3
-
-func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM) (*raft.Raft, *transport.Manager, error) {
-	c := raft.DefaultConfig()
-	c.LocalID = raft.ServerID(myID)
-
-	// this config is for development
-	ldb := raft.NewInmemStore()
-	sdb := raft.NewInmemStore()
-	fss := raft.NewInmemSnapshotStore()
-	// baseDir := filepath.Join(*raftDir, myID)
-	// fss, err := raft.NewFileSnapshotStore(baseDir, maxSnapshot, os.Stderr)
-	// if err != nil {
-	// 	return nil, nil, fmt.Errorf(`raft.NewFileSnapshotStore(%q, ...): %w`, baseDir, err)
-	// }
-
-	tm := transport.New(raft.ServerAddress(myAddress), []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	})
-
-	r, err := raft.NewRaft(c, fsm, ldb, sdb, fss, tm.Transport())
-	if err != nil {
-		return nil, nil, fmt.Errorf("raft.NewRaft: %w", err)
-	}
-
-	if *raftBootstrap {
-		cfg := raft.Configuration{
-			Servers: []raft.Server{
-				{
-					Suffrage: raft.Voter,
-					ID:       raft.ServerID(myID),
-					Address:  raft.ServerAddress(myAddress),
-				},
-			},
-		}
-		f := r.BootstrapCluster(cfg)
-		if err := f.Error(); err != nil {
-			return nil, nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)
-		}
-	}
-
-	return r, tm, nil
 }

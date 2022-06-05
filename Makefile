@@ -13,6 +13,6 @@ run: stop build
 	goreman start
 
 test:
-	go test ./...
+	go test -v ./...
 	golangci-lint run
 
