@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -15,6 +16,18 @@ import (
 	pb "github.com/bootjp/kvs/proto"
 	"github.com/hashicorp/raft"
 )
+
+var isDebug = os.Getenv("DEBUG") == "true"
+
+func debugLog(a ...any) {
+	if isDebug {
+		log.Println(a...)
+	}
+}
+
+func init() {
+	debugLog("enable debug mode")
+}
 
 const KeyLimit = 512
 
@@ -159,10 +172,6 @@ type RPCInterface struct {
 }
 
 const gcMaxBuffer = 65534
-
-func debugLog(a ...any) {
-	log.Println(a...)
-}
 
 const gcInterval = 500 * time.Millisecond
 
