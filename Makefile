@@ -10,7 +10,7 @@ stop:
 	-@killall kvs-infrastructure
 
 run: stop build
-	goreman start
+	DEBUG="true" goreman start
 
 test:
 	go test -v ./...
