@@ -17,7 +17,7 @@ func init() {
 
 const maxSnapshot = 3
 
-func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap bool) (
+func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap bool, cfg raft.Configuration) (
 	*raft.Raft, *transport.Manager, error) {
 	c := raft.DefaultConfig()
 	c.LocalID = raft.ServerID(myID)
@@ -42,15 +42,6 @@ func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap 
 	}
 
 	if bootstrap {
-		cfg := raft.Configuration{
-			Servers: []raft.Server{
-				{
-					Suffrage: raft.Voter,
-					ID:       raft.ServerID(myID),
-					Address:  raft.ServerAddress(myAddress),
-				},
-			},
-		}
 		f := r.BootstrapCluster(cfg)
 		if err := f.Error(); err != nil {
 			return nil, nil, fmt.Errorf("raft.Raft.BootstrapCluster: %w", err)

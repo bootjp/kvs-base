@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/raft"
+
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
@@ -28,10 +30,11 @@ import (
 
 var hostformat = "localhost:5000%d"
 
-var kvs []*KVS
+var kvs map[string]*KVS
 var node []*grpc.Server
 
 func TestMain(m *testing.M) {
+	kvs = make(map[string]*KVS)
 	_ = createNode(3)
 	fmt.Println("finish create node")
 	code := m.Run()
@@ -46,10 +49,26 @@ func shutdown() {
 }
 
 func createNode(n int) []*grpc.Server {
+	cfg := raft.Configuration{}
+	for i := 0; i < n; i++ {
+		fmt.Println("create node", fmt.Sprintf(hostformat, i))
+		var suffrage raft.ServerSuffrage
+		if i == 0 {
+			suffrage = raft.Voter
+		} else {
+			suffrage = raft.Nonvoter
+		}
+		addr := fmt.Sprintf(hostformat, i)
+		server := raft.Server{
+			Suffrage: suffrage,
+			ID:       raft.ServerID(strconv.Itoa(i)),
+			Address:  raft.ServerAddress(addr),
+		}
+		cfg.Servers = append(cfg.Servers, server)
+	}
 
 	for i := 0; i < n; i++ {
 		ctx := context.Background()
-		fmt.Println("create node", fmt.Sprintf(hostformat, i))
 		addr := fmt.Sprintf(hostformat, i)
 		_, port, err := net.SplitHostPort(addr)
 		if err != nil {
@@ -61,8 +80,9 @@ func createNode(n int) []*grpc.Server {
 		}
 
 		store := NewKVS()
-		kvs = append(kvs, store)
-		r, tm, err := NewRaft(ctx, strconv.Itoa(i), addr, store, i == 0)
+
+		kvs[strconv.Itoa(i)] = store
+		r, tm, err := NewRaft(ctx, strconv.Itoa(i), addr, store, i == 0, cfg)
 		if err != nil {
 			log.Fatalf("failed to start raft: %v", err)
 		}
@@ -81,13 +101,12 @@ func createNode(n int) []*grpc.Server {
 		}()
 	}
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	return node
 }
 
 func Test_value_can_be_deleted(t *testing.T) {
-
 	c := client()
 	key := []byte("test-key")
 	want := []byte("v")
@@ -198,18 +217,26 @@ func Test_no_data_in_map_after_gc(t *testing.T) {
 	if err != nil {
 		log.Fatalf("AddWord RPC failed: %v", err)
 	}
+
 	var tmp [KeyLimit]byte
 	copy(tmp[:], key)
+
+	time.Sleep(1 * time.Second)
+	for nodeIndex, kv := range kvs {
+		v, ok := kv.data[tmp]
+		if !ok {
+			t.Fatalf("node %s failed got data %v", nodeIndex, v)
+		}
+	}
 
 	time.Sleep(30 * time.Second)
 
 	for nodeIndex, kv := range kvs {
 		v, ok := kv.data[tmp]
 		if ok {
-			t.Fatalf("gc failed %d got %v now time : %v", nodeIndex, v, time.Now().UTC())
+			t.Fatalf("gc failed %s got %v now time : %v", nodeIndex, v, time.Now().UTC())
 		}
 	}
-	// todo check gc log
 }
 
 func client() pb.KVSClient {

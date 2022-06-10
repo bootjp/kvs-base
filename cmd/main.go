@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/hashicorp/raft"
+
 	"github.com/bootjp/kvs"
 	pb "github.com/bootjp/kvs/proto"
 
@@ -20,15 +22,9 @@ import (
 	_ "github.com/Jille/grpc-multi-resolver"
 )
 
-func init() {
-	// todo suppress linter for develop
-	_ = raftDir
-}
-
 var (
 	myAddr        = flag.String("address", "localhost:50051", "TCP host+port for this node")
 	raftId        = flag.String("raft_id", "", "Node id used by Raft")
-	raftDir       = flag.String("raft_data_dir", "data/", "Raft data dir")
 	raftBootstrap = flag.Bool("raft_bootstrap", false, "Whether to bootstrap the Raft cluster")
 )
 
@@ -50,7 +46,25 @@ func main() {
 	}
 
 	store := kvs.NewKVS()
-	r, tm, err := kvs.NewRaft(ctx, *raftId, *myAddr, store, *raftBootstrap)
+	r, tm, err := kvs.NewRaft(ctx, *raftId, *myAddr, store, *raftBootstrap, raft.Configuration{
+		Servers: []raft.Server{
+			{
+				Suffrage: raft.Voter,
+				ID:       "1",
+				Address:  "localhost:50000",
+			},
+			{
+				Suffrage: raft.Nonvoter,
+				ID:       "2",
+				Address:  "localhost:50001",
+			},
+			{
+				Suffrage: raft.Nonvoter,
+				ID:       "3",
+				Address:  "localhost:50002",
+			},
+		},
+	})
 	if err != nil {
 		log.Fatalf("failed to start raft: %v", err)
 	}
