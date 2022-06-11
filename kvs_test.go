@@ -74,7 +74,7 @@ func createNode(n int) []*grpc.Server {
 		if err != nil {
 			log.Fatalf("failed to parse local address (%q): %v", fmt.Sprintf(hostformat, i), err)
 		}
-		sock, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+		sock, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -104,6 +104,47 @@ func createNode(n int) []*grpc.Server {
 	time.Sleep(10 * time.Second)
 
 	return node
+}
+
+func Test_add_data_exits_majority_node(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		c := client()
+		key := []byte("test-key-exits")
+		want := []byte("test-data")
+		_, err := c.AddData(
+			context.Background(),
+			&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+		)
+		if err != nil {
+			log.Fatalf("Add RPC failed: %v", err)
+		}
+
+		var tmp [KeyLimit]byte
+		copy(tmp[:], key)
+
+		var failedNode []*KVS
+		for _, kv := range kvs {
+			kv.mtx.RLock()
+			v, ok := kv.data[tmp]
+			kv.mtx.RUnlock()
+			if !ok {
+				failedNode = append(failedNode, kv)
+				t.Logf("failed detect count %d", len(failedNode))
+			}
+			if ok {
+				if !reflect.DeepEqual(want, *v.Value) {
+					t.Fatalf("consistency check failed want %v got %v", want, v)
+				}
+			}
+
+			if len(failedNode) > 1 {
+				for failIndex, k := range failedNode {
+					t.Logf("node %d failed got data %v", failIndex, k)
+				}
+				t.Fatalf("failed read")
+			}
+		}
+	}
 }
 
 func Test_value_can_be_deleted(t *testing.T) {
@@ -157,21 +198,20 @@ func Test_consistency_satisfy_write_after_read(t *testing.T) {
 			&pb.AddDataRequest{Key: key, Data: want},
 		)
 		if err != nil {
-			log.Fatalf("AddWord RPC failed: %v", err)
+			log.Fatalf("Add RPC failed: %v", err)
 		}
 		_, err = c.AddData(context.TODO(), &pb.AddDataRequest{Key: key, Data: want})
 		if err != nil {
-			t.Fatalf("AddWord RPC failed: %v", err)
+			t.Fatalf("Add RPC failed: %v", err)
 		}
 		resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 		if err != nil {
-			t.Fatalf("GetWords RPC failed: %v", err)
+			t.Fatalf("Get RPC failed: %v", err)
 		}
 
 		if !reflect.DeepEqual(want, resp.Data) {
 			t.Fatalf("consistency check failed want %v got %v", want, resp.Data)
 		}
-		t.Log(want, "check ok")
 	}
 }
 
@@ -184,12 +224,12 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
 	)
 	if err != nil {
-		log.Fatalf("AddWord RPC failed: %v", err)
+		log.Fatalf("Add RPC failed: %v", err)
 	}
 	time.Sleep(9 * time.Second)
 	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("GetWords RPC failed: %v", err)
+		t.Fatalf("Get RPC failed: %v", err)
 	}
 
 	if !reflect.DeepEqual(want, resp.Data) {
@@ -199,7 +239,7 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("GetWords RPC failed: %v", err)
+		t.Fatalf("Get RPC failed: %v", err)
 	}
 	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
 		t.Fatalf("Delete test failed: %v", resp.Data)
@@ -208,26 +248,18 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 
 func Test_no_data_in_map_after_gc(t *testing.T) {
 	c := client()
-	key := []byte("test-key")
+	key := []byte("test-key-gc")
 	want := []byte("test-data")
 	_, err := c.AddData(
 		context.Background(),
 		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
 	)
 	if err != nil {
-		log.Fatalf("AddWord RPC failed: %v", err)
+		log.Fatalf("Add RPC failed: %v", err)
 	}
 
 	var tmp [KeyLimit]byte
 	copy(tmp[:], key)
-
-	time.Sleep(1 * time.Second)
-	for nodeIndex, kv := range kvs {
-		v, ok := kv.data[tmp]
-		if !ok {
-			t.Fatalf("node %s failed got data %v", nodeIndex, v)
-		}
-	}
 
 	time.Sleep(30 * time.Second)
 
