@@ -106,7 +106,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 	defer f.mtx.Unlock()
 	p, err := DecodePair(l.Data)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
@@ -114,7 +114,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 		debugLog("delete", *p.Key)
 		delete(f.data, *p.Key)
 		delete(f.expire, *p.Key)
-		return nil
+		return true
 	}
 
 	f.data[*p.Key] = &p
@@ -122,7 +122,7 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 		f.expire[*p.Key] = &p
 	}
 
-	return nil
+	return true
 }
 
 func (f *KVS) Snapshot() (raft.FSMSnapshot, error) {
@@ -279,6 +279,22 @@ func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.Ad
 
 	f := r.Raft.Apply(e, time.Second)
 	if err := f.Error(); err != nil {
+		return &pb.AddDataResponse{
+			CommitIndex: f.Index(),
+			Status:      pb.Status_ABORT,
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
+	}
+
+	resp := f.Response()
+	if err, ok := resp.(error); ok {
+		return &pb.AddDataResponse{
+			CommitIndex: f.Index(),
+			Status:      pb.Status_ABORT,
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
+	}
+
+	ff := r.Raft.Barrier(1 * time.Second)
+	if err := ff.Error(); err != nil {
 		return &pb.AddDataResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
