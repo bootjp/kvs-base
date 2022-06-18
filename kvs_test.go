@@ -106,47 +106,6 @@ func createNode(n int) []*grpc.Server {
 	return node
 }
 
-//func Test_add_data_exits_majority_node(t *testing.T) {
-//	for i := 0; i < 1000; i++ {
-//		c := client()
-//		key := []byte("test-key-exits")
-//		want := []byte("test-data")
-//		_, err := c.AddData(
-//			context.Background(),
-//			&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
-//		)
-//		if err != nil {
-//			log.Fatalf("Add RPC failed: %v", err)
-//		}
-//
-//		var tmp [KeyLimit]byte
-//		copy(tmp[:], key)
-//
-//		var failedNode []*KVS
-//		for _, kv := range kvs {
-//			kv.mtx.RLock()
-//			v, ok := kv.data[tmp]
-//			kv.mtx.RUnlock()
-//			if !ok {
-//				failedNode = append(failedNode, kv)
-//				t.Logf("failed detect count %d", len(failedNode))
-//			}
-//			if ok {
-//				if !reflect.DeepEqual(want, *v.Value) {
-//					t.Fatalf("consistency check failed want %v got %v", want, v)
-//				}
-//			}
-//
-//			if len(failedNode) > 1 {
-//				for failIndex, k := range failedNode {
-//					t.Logf("node %d failed got data %v", failIndex, k)
-//				}
-//				t.Fatalf("failed read")
-//			}
-//		}
-//	}
-//}
-
 func Test_value_can_be_deleted(t *testing.T) {
 	c := client()
 	key := []byte("test-key")
