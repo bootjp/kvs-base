@@ -68,12 +68,14 @@ func NewKVS() *KVS {
 	return s
 }
 
+var ErrEncode = errors.New("failed data encode")
+
 func EncodePair(p Pair) ([]byte, error) {
 	b := &bytes.Buffer{}
 	e := gob.NewEncoder(b)
 
 	if err := e.Encode(p); err != nil {
-		return nil, fmt.Errorf("failed data encode: %w", err)
+		return nil, ErrEncode
 	}
 
 	return b.Bytes(), nil
