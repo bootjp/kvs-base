@@ -35,6 +35,17 @@ message AddDataResponse {
 	Status Status = 2;
 }
 
+message Operation {
+	oneof OP {
+		bytes data = 1;
+		bool delete = 2;
+	}
+}
+
+message Transaction {
+	map<string, Operation>pair = 1;
+}
+
 message GetDataRequest {
 	bytes key = 1;
 }
