@@ -78,7 +78,7 @@ func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.Ad
 		}, errors.Unwrap(rafterrors.MarkRetriable(err))
 	}
 
-	ff := r.Raft.Barrier(1 * time.Second)
+	ff := r.Raft.Barrier(time.Second)
 	if err := ff.Error(); err != nil {
 		return &pb.AddDataResponse{
 			CommitIndex: f.Index(),
