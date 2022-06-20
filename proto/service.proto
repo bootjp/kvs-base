@@ -5,9 +5,10 @@ import "google/protobuf/duration.proto";
 option go_package = "github.com/bootjp/kvs/proto";
 
 service KVS {
-	rpc AddData(AddDataRequest) returns (AddDataResponse) {}
-	rpc GetData(GetDataRequest) returns (GetDataResponse) {}
-	rpc DeleteData(DeleteRequest) returns (DeleteResponse) {}
+	rpc Put(AddDataRequest) returns (AddDataResponse) {}
+	rpc Get(GetDataRequest) returns (GetDataResponse) {}
+	rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+	rpc Transaction(TransactionRequest) returns (TransactionResponse) {}
 }
 
 message AddDataRequest {
@@ -42,8 +43,12 @@ message Operation {
 	}
 }
 
-message Transaction {
+message TransactionRequest {
 	map<string, Operation>pair = 1;
+}
+
+message TransactionResponse {
+	Status Status = 1;
 }
 
 message GetDataRequest {

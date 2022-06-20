@@ -420,7 +420,7 @@ func (*Operation_Data) isOperation_OP() {}
 
 func (*Operation_Delete) isOperation_OP() {}
 
-type Transaction struct {
+type TransactionRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -428,8 +428,8 @@ type Transaction struct {
 	Pair map[string]*Operation `protobuf:"bytes,1,rep,name=pair,proto3" json:"pair,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
-func (x *Transaction) Reset() {
-	*x = Transaction{}
+func (x *TransactionRequest) Reset() {
+	*x = TransactionRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_service_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -437,13 +437,13 @@ func (x *Transaction) Reset() {
 	}
 }
 
-func (x *Transaction) String() string {
+func (x *TransactionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Transaction) ProtoMessage() {}
+func (*TransactionRequest) ProtoMessage() {}
 
-func (x *Transaction) ProtoReflect() protoreflect.Message {
+func (x *TransactionRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_service_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -455,16 +455,63 @@ func (x *Transaction) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
-func (*Transaction) Descriptor() ([]byte, []int) {
+// Deprecated: Use TransactionRequest.ProtoReflect.Descriptor instead.
+func (*TransactionRequest) Descriptor() ([]byte, []int) {
 	return file_service_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Transaction) GetPair() map[string]*Operation {
+func (x *TransactionRequest) GetPair() map[string]*Operation {
 	if x != nil {
 		return x.Pair
 	}
 	return nil
+}
+
+type TransactionResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Status Status `protobuf:"varint,1,opt,name=Status,proto3,enum=Status" json:"Status,omitempty"`
+}
+
+func (x *TransactionResponse) Reset() {
+	*x = TransactionResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_service_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TransactionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionResponse) ProtoMessage() {}
+
+func (x *TransactionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionResponse.ProtoReflect.Descriptor instead.
+func (*TransactionResponse) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *TransactionResponse) GetStatus() Status {
+	if x != nil {
+		return x.Status
+	}
+	return Status_COMMIT
 }
 
 type GetDataRequest struct {
@@ -478,7 +525,7 @@ type GetDataRequest struct {
 func (x *GetDataRequest) Reset() {
 	*x = GetDataRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[6]
+		mi := &file_service_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -491,7 +538,7 @@ func (x *GetDataRequest) String() string {
 func (*GetDataRequest) ProtoMessage() {}
 
 func (x *GetDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +551,7 @@ func (x *GetDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDataRequest.ProtoReflect.Descriptor instead.
 func (*GetDataRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetDataRequest) GetKey() []byte {
@@ -528,7 +575,7 @@ type GetDataResponse struct {
 func (x *GetDataResponse) Reset() {
 	*x = GetDataResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[7]
+		mi := &file_service_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -541,7 +588,7 @@ func (x *GetDataResponse) String() string {
 func (*GetDataResponse) ProtoMessage() {}
 
 func (x *GetDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_service_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -554,7 +601,7 @@ func (x *GetDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDataResponse.ProtoReflect.Descriptor instead.
 func (*GetDataResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{7}
+	return file_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetDataResponse) GetReadAtIndex() uint64 {
@@ -614,44 +661,51 @@ var file_service_proto_rawDesc = []byte{
 	0x6e, 0x12, 0x14, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x48,
 	0x00, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x12, 0x18, 0x0a, 0x06, 0x64, 0x65, 0x6c, 0x65, 0x74,
 	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x06, 0x64, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x42, 0x04, 0x0a, 0x02, 0x4f, 0x50, 0x22, 0x7e, 0x0a, 0x0b, 0x54, 0x72, 0x61, 0x6e, 0x73,
-	0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2a, 0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x2e, 0x50, 0x61, 0x69, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x70, 0x61,
-	0x69, 0x72, 0x1a, 0x43, 0x0a, 0x09, 0x50, 0x61, 0x69, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
-	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
-	0x79, 0x12, 0x20, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x0a, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x22, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x44, 0x61,
-	0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x22, 0x80, 0x01, 0x0a, 0x0f,
-	0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x22, 0x0a, 0x0d, 0x72, 0x65, 0x61, 0x64, 0x5f, 0x61, 0x74, 0x5f, 0x69, 0x6e, 0x64, 0x65, 0x78,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x72, 0x65, 0x61, 0x64, 0x41, 0x74, 0x49, 0x6e,
-	0x64, 0x65, 0x78, 0x12, 0x23, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x0d, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x45, 0x72, 0x72, 0x6f,
-	0x72, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
-	0x0a, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x61,
-	0x74, 0x61, 0x18, 0x14, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x2a, 0x1f,
-	0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0a, 0x0a, 0x06, 0x43, 0x4f, 0x4d, 0x4d,
-	0x49, 0x54, 0x10, 0x00, 0x12, 0x09, 0x0a, 0x05, 0x41, 0x42, 0x4f, 0x52, 0x54, 0x10, 0x01, 0x2a,
-	0x41, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12,
-	0x0c, 0x0a, 0x08, 0x4e, 0x4f, 0x5f, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x00, 0x12, 0x0f, 0x0a,
-	0x0b, 0x46, 0x45, 0x54, 0x43, 0x48, 0x5f, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x01, 0x12, 0x12,
-	0x0a, 0x0e, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x4e, 0x4f, 0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44,
-	0x10, 0x02, 0x32, 0x96, 0x01, 0x0a, 0x03, 0x4b, 0x56, 0x53, 0x12, 0x2e, 0x0a, 0x07, 0x41, 0x64,
-	0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0f, 0x2e, 0x41, 0x64, 0x64, 0x44, 0x61, 0x74, 0x61, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x41, 0x64, 0x64, 0x44, 0x61, 0x74, 0x61,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2e, 0x0a, 0x07, 0x47, 0x65,
-	0x74, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0f, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2f, 0x0a, 0x0a, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0e, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0f, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x1d, 0x5a, 0x1b, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x6a, 0x70,
-	0x2f, 0x6b, 0x76, 0x73, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x65, 0x42, 0x04, 0x0a, 0x02, 0x4f, 0x50, 0x22, 0x8c, 0x01, 0x0a, 0x12, 0x54, 0x72, 0x61, 0x6e,
+	0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x31,
+	0x0a, 0x04, 0x70, 0x61, 0x69, 0x72, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x54,
+	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x2e, 0x50, 0x61, 0x69, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x70, 0x61, 0x69,
+	0x72, 0x1a, 0x43, 0x0a, 0x09, 0x50, 0x61, 0x69, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x20, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0a, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x36, 0x0a, 0x13, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a,
+	0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x07, 0x2e,
+	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x22,
+	0x0a, 0x0e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b,
+	0x65, 0x79, 0x22, 0x80, 0x01, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x22, 0x0a, 0x0d, 0x72, 0x65, 0x61, 0x64, 0x5f, 0x61,
+	0x74, 0x5f, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x72,
+	0x65, 0x61, 0x64, 0x41, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x23, 0x0a, 0x05, 0x45, 0x72,
+	0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x0d, 0x2e, 0x47, 0x65, 0x74, 0x44,
+	0x61, 0x74, 0x61, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x14, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x2a, 0x1f, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
+	0x0a, 0x0a, 0x06, 0x43, 0x4f, 0x4d, 0x4d, 0x49, 0x54, 0x10, 0x00, 0x12, 0x09, 0x0a, 0x05, 0x41,
+	0x42, 0x4f, 0x52, 0x54, 0x10, 0x01, 0x2a, 0x41, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74,
+	0x61, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x0c, 0x0a, 0x08, 0x4e, 0x4f, 0x5f, 0x45, 0x52, 0x52,
+	0x4f, 0x52, 0x10, 0x00, 0x12, 0x0f, 0x0a, 0x0b, 0x46, 0x45, 0x54, 0x43, 0x48, 0x5f, 0x45, 0x52,
+	0x52, 0x4f, 0x52, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x4e, 0x4f,
+	0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44, 0x10, 0x02, 0x32, 0xc6, 0x01, 0x0a, 0x03, 0x4b, 0x56,
+	0x53, 0x12, 0x2a, 0x0a, 0x03, 0x50, 0x75, 0x74, 0x12, 0x0f, 0x2e, 0x41, 0x64, 0x64, 0x44, 0x61,
+	0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x41, 0x64, 0x64, 0x44,
+	0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2a, 0x0a,
+	0x03, 0x47, 0x65, 0x74, 0x12, 0x0f, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x10, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2b, 0x0a, 0x06, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x12, 0x0e, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x0f, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3a, 0x0a, 0x0b, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x13, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x54, 0x72, 0x61,
+	0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x42, 0x1d, 0x5a, 0x1b, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x6a, 0x70, 0x2f, 0x6b, 0x76, 0x73, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -667,7 +721,7 @@ func file_service_proto_rawDescGZIP() []byte {
 }
 
 var file_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_service_proto_goTypes = []interface{}{
 	(Status)(0),                 // 0: Status
 	(GetDataError)(0),           // 1: GetDataError
@@ -676,30 +730,34 @@ var file_service_proto_goTypes = []interface{}{
 	(*DeleteResponse)(nil),      // 4: DeleteResponse
 	(*AddDataResponse)(nil),     // 5: AddDataResponse
 	(*Operation)(nil),           // 6: Operation
-	(*Transaction)(nil),         // 7: Transaction
-	(*GetDataRequest)(nil),      // 8: GetDataRequest
-	(*GetDataResponse)(nil),     // 9: GetDataResponse
-	nil,                         // 10: Transaction.PairEntry
-	(*durationpb.Duration)(nil), // 11: google.protobuf.Duration
+	(*TransactionRequest)(nil),  // 7: TransactionRequest
+	(*TransactionResponse)(nil), // 8: TransactionResponse
+	(*GetDataRequest)(nil),      // 9: GetDataRequest
+	(*GetDataResponse)(nil),     // 10: GetDataResponse
+	nil,                         // 11: TransactionRequest.PairEntry
+	(*durationpb.Duration)(nil), // 12: google.protobuf.Duration
 }
 var file_service_proto_depIdxs = []int32{
-	11, // 0: AddDataRequest.ttl:type_name -> google.protobuf.Duration
+	12, // 0: AddDataRequest.ttl:type_name -> google.protobuf.Duration
 	0,  // 1: DeleteResponse.Status:type_name -> Status
 	0,  // 2: AddDataResponse.Status:type_name -> Status
-	10, // 3: Transaction.pair:type_name -> Transaction.PairEntry
-	1,  // 4: GetDataResponse.Error:type_name -> GetDataError
-	6,  // 5: Transaction.PairEntry.value:type_name -> Operation
-	2,  // 6: KVS.AddData:input_type -> AddDataRequest
-	8,  // 7: KVS.GetData:input_type -> GetDataRequest
-	3,  // 8: KVS.DeleteData:input_type -> DeleteRequest
-	5,  // 9: KVS.AddData:output_type -> AddDataResponse
-	9,  // 10: KVS.GetData:output_type -> GetDataResponse
-	4,  // 11: KVS.DeleteData:output_type -> DeleteResponse
-	9,  // [9:12] is the sub-list for method output_type
-	6,  // [6:9] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	11, // 3: TransactionRequest.pair:type_name -> TransactionRequest.PairEntry
+	0,  // 4: TransactionResponse.Status:type_name -> Status
+	1,  // 5: GetDataResponse.Error:type_name -> GetDataError
+	6,  // 6: TransactionRequest.PairEntry.value:type_name -> Operation
+	2,  // 7: KVS.Put:input_type -> AddDataRequest
+	9,  // 8: KVS.Get:input_type -> GetDataRequest
+	3,  // 9: KVS.Delete:input_type -> DeleteRequest
+	7,  // 10: KVS.Transaction:input_type -> TransactionRequest
+	5,  // 11: KVS.Put:output_type -> AddDataResponse
+	10, // 12: KVS.Get:output_type -> GetDataResponse
+	4,  // 13: KVS.Delete:output_type -> DeleteResponse
+	8,  // 14: KVS.Transaction:output_type -> TransactionResponse
+	11, // [11:15] is the sub-list for method output_type
+	7,  // [7:11] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -769,7 +827,7 @@ func file_service_proto_init() {
 			}
 		}
 		file_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Transaction); i {
+			switch v := v.(*TransactionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -781,7 +839,7 @@ func file_service_proto_init() {
 			}
 		}
 		file_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDataRequest); i {
+			switch v := v.(*TransactionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -793,6 +851,18 @@ func file_service_proto_init() {
 			}
 		}
 		file_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetDataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetDataResponse); i {
 			case 0:
 				return &v.state
@@ -815,7 +885,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_service_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -842,9 +912,10 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type KVSClient interface {
-	AddData(ctx context.Context, in *AddDataRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
-	GetData(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataResponse, error)
-	DeleteData(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Put(ctx context.Context, in *AddDataRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
+	Get(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Transaction(ctx context.Context, in *TransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error)
 }
 
 type kVSClient struct {
@@ -855,27 +926,36 @@ func NewKVSClient(cc grpc.ClientConnInterface) KVSClient {
 	return &kVSClient{cc}
 }
 
-func (c *kVSClient) AddData(ctx context.Context, in *AddDataRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
+func (c *kVSClient) Put(ctx context.Context, in *AddDataRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
 	out := new(AddDataResponse)
-	err := c.cc.Invoke(ctx, "/KVS/AddData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/KVS/Put", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *kVSClient) GetData(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataResponse, error) {
+func (c *kVSClient) Get(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataResponse, error) {
 	out := new(GetDataResponse)
-	err := c.cc.Invoke(ctx, "/KVS/GetData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/KVS/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *kVSClient) DeleteData(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *kVSClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/KVS/DeleteData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/KVS/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kVSClient) Transaction(ctx context.Context, in *TransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error) {
+	out := new(TransactionResponse)
+	err := c.cc.Invoke(ctx, "/KVS/Transaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -884,79 +964,101 @@ func (c *kVSClient) DeleteData(ctx context.Context, in *DeleteRequest, opts ...g
 
 // KVSServer is the server API for KVS service.
 type KVSServer interface {
-	AddData(context.Context, *AddDataRequest) (*AddDataResponse, error)
-	GetData(context.Context, *GetDataRequest) (*GetDataResponse, error)
-	DeleteData(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Put(context.Context, *AddDataRequest) (*AddDataResponse, error)
+	Get(context.Context, *GetDataRequest) (*GetDataResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Transaction(context.Context, *TransactionRequest) (*TransactionResponse, error)
 }
 
 // UnimplementedKVSServer can be embedded to have forward compatible implementations.
 type UnimplementedKVSServer struct {
 }
 
-func (*UnimplementedKVSServer) AddData(context.Context, *AddDataRequest) (*AddDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddData not implemented")
+func (*UnimplementedKVSServer) Put(context.Context, *AddDataRequest) (*AddDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
 }
-func (*UnimplementedKVSServer) GetData(context.Context, *GetDataRequest) (*GetDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetData not implemented")
+func (*UnimplementedKVSServer) Get(context.Context, *GetDataRequest) (*GetDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (*UnimplementedKVSServer) DeleteData(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteData not implemented")
+func (*UnimplementedKVSServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (*UnimplementedKVSServer) Transaction(context.Context, *TransactionRequest) (*TransactionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Transaction not implemented")
 }
 
 func RegisterKVSServer(s *grpc.Server, srv KVSServer) {
 	s.RegisterService(&_KVS_serviceDesc, srv)
 }
 
-func _KVS_AddData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KVS_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVSServer).AddData(ctx, in)
+		return srv.(KVSServer).Put(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/KVS/AddData",
+		FullMethod: "/KVS/Put",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVSServer).AddData(ctx, req.(*AddDataRequest))
+		return srv.(KVSServer).Put(ctx, req.(*AddDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _KVS_GetData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KVS_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVSServer).GetData(ctx, in)
+		return srv.(KVSServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/KVS/GetData",
+		FullMethod: "/KVS/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVSServer).GetData(ctx, req.(*GetDataRequest))
+		return srv.(KVSServer).Get(ctx, req.(*GetDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _KVS_DeleteData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KVS_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVSServer).DeleteData(ctx, in)
+		return srv.(KVSServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/KVS/DeleteData",
+		FullMethod: "/KVS/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVSServer).DeleteData(ctx, req.(*DeleteRequest))
+		return srv.(KVSServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KVS_Transaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransactionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KVSServer).Transaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/KVS/Transaction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KVSServer).Transaction(ctx, req.(*TransactionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -966,16 +1068,20 @@ var _KVS_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*KVSServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddData",
-			Handler:    _KVS_AddData_Handler,
+			MethodName: "Put",
+			Handler:    _KVS_Put_Handler,
 		},
 		{
-			MethodName: "GetData",
-			Handler:    _KVS_GetData_Handler,
+			MethodName: "Get",
+			Handler:    _KVS_Get_Handler,
 		},
 		{
-			MethodName: "DeleteData",
-			Handler:    _KVS_DeleteData_Handler,
+			MethodName: "Delete",
+			Handler:    _KVS_Delete_Handler,
+		},
+		{
+			MethodName: "Transaction",
+			Handler:    _KVS_Transaction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

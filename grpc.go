@@ -10,7 +10,7 @@ import (
 	pb "github.com/bootjp/kvs/proto"
 )
 
-func (r RPCInterface) DeleteData(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.DeleteResponse{
 			Status:      pb.Status_ABORT,
@@ -43,7 +43,7 @@ func (r RPCInterface) DeleteData(_ context.Context, req *pb.DeleteRequest) (*pb.
 	}, nil
 }
 
-func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
+func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.AddDataResponse{
 			Status:      pb.Status_ABORT,
@@ -92,7 +92,7 @@ func (r RPCInterface) AddData(_ context.Context, req *pb.AddDataRequest) (*pb.Ad
 	}, nil
 }
 
-func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
+func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
 	r.KVS.mtx.RLock()
 	defer r.KVS.mtx.RUnlock()
 
@@ -136,4 +136,8 @@ func (r RPCInterface) GetData(_ context.Context, req *pb.GetDataRequest) (*pb.Ge
 		ReadAtIndex: r.Raft.AppliedIndex(),
 	}, nil
 
+}
+
+func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest) (*pb.TransactionResponse, error) {
+	return &pb.TransactionResponse{}, nil
 }
