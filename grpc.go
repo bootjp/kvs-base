@@ -153,7 +153,7 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 		copy(tmp[:], s)
 
 		value := op.GetData()
-		pair := Pair{Key: &tmp, Value: &value, Expire: TTLtoTime(0)}
+		pair := Pair{Key: &tmp, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
 		e, err := EncodePair(pair)
 		if err != nil {
 			return &pb.TransactionResponse{
