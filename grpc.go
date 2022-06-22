@@ -139,5 +139,38 @@ func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDat
 }
 
 func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest) (*pb.TransactionResponse, error) {
-	return &pb.TransactionResponse{}, nil
+
+	r.KVS.mtx.RLock()
+	defer r.KVS.mtx.RUnlock()
+
+	for s, op := range req.GetPair() {
+		if len(s) > KeyLimit {
+			return &pb.TransactionResponse{
+				Status: pb.Status_ABORT,
+			}, fmt.Errorf("reachd key size limit: %d max key size %d", len(s), KeyLimit)
+		}
+		var tmp [KeyLimit]byte
+		copy(tmp[:], s)
+
+		value := op.GetData()
+		pair := Pair{Key: &tmp, Value: &value, Expire: TTLtoTime(0)}
+		e, err := EncodePair(pair)
+		if err != nil {
+			return &pb.TransactionResponse{
+				Status: pb.Status_ABORT,
+			}, err
+		}
+
+		// todo transaction type
+		f := r.Raft.Apply(e, time.Second)
+		if err := f.Error(); err != nil {
+			return &pb.TransactionResponse{
+				Status: pb.Status_ABORT,
+			}, errors.Unwrap(rafterrors.MarkRetriable(err))
+		}
+	}
+
+	return &pb.TransactionResponse{
+		Status: pb.Status_COMMIT,
+	}, nil
 }
