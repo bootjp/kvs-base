@@ -56,6 +56,48 @@ type KVS struct {
 	expire KV
 }
 
+var ErrNotFound = errors.New("not found")
+
+func (k *KVS) Get(key [KeyLimit]byte) (*Pair, error) {
+	k.mtx.RLock()
+	defer k.mtx.RUnlock()
+
+	v, ok := k.data[key]
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	// check expire
+	if !v.Expire.NoExpire && v.Expire.Expire(time.Now().UTC()) {
+		return nil, ErrNotFound
+	}
+
+	return v, nil
+}
+
+func (k *KVS) Delete(key *[512]byte) error {
+	k.mtx.Lock()
+	defer k.mtx.Unlock()
+
+	delete(k.data, *key)
+	delete(k.expire, *key)
+	debugLog("delete", *key)
+
+	return nil
+}
+
+func (k *KVS) Set(p *Pair) error {
+	k.mtx.Lock()
+	defer k.mtx.Unlock()
+
+	k.data[*p.Key] = p
+	if !p.Expire.NoExpire {
+		k.expire[*p.Key] = p
+	}
+
+	return nil
+}
+
 func NewKVS() *KVS {
 	s := &KVS{}
 	s.data = map[[KeyLimit]byte]*Pair{}

@@ -59,9 +59,7 @@ func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap 
 // check raft.FSM impl
 var _ raft.FSM = &KVS{}
 
-func (f *KVS) Apply(l *raft.Log) interface{} {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
+func (k *KVS) Apply(l *raft.Log) interface{} {
 	p, err := DecodePair(l.Data)
 	if err != nil {
 		return err
@@ -69,26 +67,26 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 
 	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
 	if p.IsDelete {
-		debugLog("delete", *p.Key)
-		delete(f.data, *p.Key)
-		delete(f.expire, *p.Key)
-		return true
-	}
-
-	f.data[*p.Key] = &p
-	if !p.Expire.NoExpire {
-		f.expire[*p.Key] = &p
+		err := k.Delete(p.Key)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := k.Set(&p)
+		if err != nil {
+			return err
+		}
 	}
 
 	return true
 }
 
-func (f *KVS) Snapshot() (raft.FSMSnapshot, error) {
+func (k *KVS) Snapshot() (raft.FSMSnapshot, error) {
 	// Make sure that any future calls to f.Apply() don't change the snapshot.
-	return &snapshot{cloneKV(f.data)}, nil
+	return &snapshot{cloneKV(k.data)}, nil
 }
 
-func (f *KVS) Restore(r io.ReadCloser) error {
+func (k *KVS) Restore(r io.ReadCloser) error {
 	var decodedMap KV
 	d := gob.NewDecoder(r)
 

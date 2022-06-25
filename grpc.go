@@ -32,6 +32,7 @@ func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.Dele
 	}
 
 	f := r.Raft.Apply(e, time.Second)
+	r.Raft.Barrier(time.Second)
 	if err := f.Error(); err != nil {
 		return &pb.DeleteResponse{
 			CommitIndex: f.Index(),
@@ -95,9 +96,6 @@ func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDat
 }
 
 func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
-	r.KVS.mtx.RLock()
-	defer r.KVS.mtx.RUnlock()
-
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.GetDataResponse{
 			Key:         req.Key,
@@ -110,23 +108,18 @@ func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDat
 	var tmp [KeyLimit]byte
 	copy(tmp[:], req.Key)
 
-	v, ok := r.KVS.data[tmp]
-	if !ok {
-		return &pb.GetDataResponse{
-			Key:         req.Key,
-			Data:        nil,
-			Error:       pb.GetDataError_DATA_NOT_FOUND,
-			ReadAtIndex: r.Raft.AppliedIndex(),
-		}, nil
-	}
+	var rspError = pb.GetDataError_FETCH_ERROR
 
-	// check expire
-	if !v.Expire.NoExpire && v.Expire.Expire(time.Now().UTC()) {
-		r.gcc <- *v
+	v, err := r.KVS.Get(tmp)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			rspError = pb.GetDataError_DATA_NOT_FOUND
+		}
+
 		return &pb.GetDataResponse{
 			Key:         req.Key,
 			Data:        nil,
-			Error:       pb.GetDataError_DATA_NOT_FOUND,
+			Error:       rspError,
 			ReadAtIndex: r.Raft.AppliedIndex(),
 		}, nil
 	}
