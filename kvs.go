@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"log"
 	"os"
 	"sync"
@@ -26,7 +27,7 @@ func init() {
 const KeyLimit = 512
 
 type Pair struct {
-	Key      *[KeyLimit]byte
+	Key      *[]byte
 	Value    *[]byte
 	IsDelete bool
 	Expire   Expire
@@ -48,7 +49,7 @@ func (e *Expire) Expire(t time.Time) bool {
 	return t.After(e.Time)
 }
 
-type KV map[[KeyLimit]byte]*Pair
+type KV map[uint64]*Pair
 
 type KVS struct {
 	mtx    sync.RWMutex
@@ -58,11 +59,11 @@ type KVS struct {
 
 var ErrNotFound = errors.New("not found")
 
-func (k *KVS) Get(key [KeyLimit]byte) (*Pair, error) {
+func (k *KVS) Get(key *[]byte) (*Pair, error) {
 	k.mtx.RLock()
 	defer k.mtx.RUnlock()
 
-	v, ok := k.data[key]
+	v, ok := k.data[k.hash(key)]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -75,13 +76,13 @@ func (k *KVS) Get(key [KeyLimit]byte) (*Pair, error) {
 	return v, nil
 }
 
-func (k *KVS) Delete(key *[512]byte) error {
+func (k *KVS) Delete(key *[]byte) error {
 	k.mtx.Lock()
 	defer k.mtx.Unlock()
 
-	delete(k.data, *key)
-	delete(k.expire, *key)
-	debugLog("delete", *key)
+	delete(k.data, k.hash(key))
+	delete(k.expire, k.hash(key))
+	debugLog("delete", key)
 
 	return nil
 }
@@ -90,18 +91,28 @@ func (k *KVS) Set(p *Pair) error {
 	k.mtx.Lock()
 	defer k.mtx.Unlock()
 
-	k.data[*p.Key] = p
+	po := k.hash(p.Key)
+
+	k.data[po] = p
 	if !p.Expire.NoExpire {
-		k.expire[*p.Key] = p
+		k.expire[k.hash(p.Key)] = p
 	}
 
 	return nil
 }
 
+func (k *KVS) hash(b *[]byte) uint64 {
+	h := fnv.New64()
+	if _, err := h.Write(*b); err != nil {
+		panic(err)
+	}
+	return h.Sum64()
+}
+
 func NewKVS() *KVS {
 	s := &KVS{}
-	s.data = map[[KeyLimit]byte]*Pair{}
-	s.expire = map[[KeyLimit]byte]*Pair{}
+	s.data = KV{}
+	s.expire = KV{}
 	return s
 }
 

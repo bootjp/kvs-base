@@ -12,18 +12,19 @@ import (
 	"github.com/hashicorp/raft"
 )
 
+func (r RPCInterface) checkKeyLimit(l int) bool {
+	return l > KeyLimit
+}
+
 func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	if len(req.GetKey()) > KeyLimit {
+	if r.checkKeyLimit(len(req.GetKey())) {
 		return &pb.DeleteResponse{
 			Status:      pb.Status_ABORT,
 			CommitIndex: r.Raft.AppliedIndex(),
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
-	pair := Pair{Key: &tmp, Value: nil, IsDelete: true}
+	pair := Pair{Key: &req.Key, Value: nil, IsDelete: true}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.DeleteResponse{
@@ -47,17 +48,14 @@ func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.Dele
 }
 
 func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
-	if len(req.GetKey()) > KeyLimit {
+	if r.checkKeyLimit(len(req.GetKey())) {
 		return &pb.AddDataResponse{
 			Status:      pb.Status_ABORT,
 			CommitIndex: r.Raft.AppliedIndex(),
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
-	pair := Pair{Key: &tmp, Value: &req.Data, Expire: TTLtoTime(req.GetTtl().AsDuration())}
+	pair := Pair{Key: &req.Key, Value: &req.Data, Expire: TTLtoTime(req.GetTtl().AsDuration())}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.AddDataResponse{
@@ -96,7 +94,7 @@ func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDat
 }
 
 func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
-	if len(req.GetKey()) > KeyLimit {
+	if r.checkKeyLimit(len(req.GetKey())) {
 		return &pb.GetDataResponse{
 			Key:         req.Key,
 			Data:        nil,
@@ -105,12 +103,9 @@ func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDat
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
 	var rspError = pb.GetDataError_FETCH_ERROR
 
-	v, err := r.KVS.Get(tmp)
+	v, err := r.KVS.Get(&req.Key)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			rspError = pb.GetDataError_DATA_NOT_FOUND
@@ -144,11 +139,10 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 				Status: pb.Status_ABORT,
 			}, fmt.Errorf("reachd key size limit: %d max key size %d", len(s), KeyLimit)
 		}
-		var tmp [KeyLimit]byte
-		copy(tmp[:], s)
 
 		value := op.GetData()
-		pair := Pair{Key: &tmp, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
+		k := []byte(s)
+		pair := Pair{Key: &k, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
 		e, err := EncodePair(pair)
 		if err != nil {
 			return &pb.TransactionResponse{

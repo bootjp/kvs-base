@@ -217,13 +217,10 @@ func Test_no_data_in_map_after_gc(t *testing.T) {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], key)
-
 	time.Sleep(30 * time.Second)
 
 	for nodeIndex, kv := range kvs {
-		v, ok := kv.data[tmp]
+		v, ok := kv.data[kv.hash(&key)]
 		if ok {
 			t.Fatalf("gc failed %s got %v now time : %v", nodeIndex, v, time.Now().UTC())
 		}
