@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Jille/raft-grpc-leader-rpc/rafterrors"
 	pb "github.com/bootjp/kvs/proto"
+	"github.com/hashicorp/raft"
 )
 
 func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -173,4 +175,51 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 	return &pb.TransactionResponse{
 		Status: pb.Status_COMMIT,
 	}, nil
+}
+
+type RPCInterface struct {
+	KVS         *KVS
+	Raft        *raft.Raft
+	gcc         chan Pair
+	Environment string
+}
+
+const gcMaxBuffer = 65534
+
+const gcInterval = 500 * time.Millisecond
+
+func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
+	r := &RPCInterface{
+		KVS:  kvs,
+		Raft: raft,
+		gcc:  make(chan Pair, gcMaxBuffer),
+	}
+	go (func(r *RPCInterface) {
+		debugLog("run gc")
+		ticker := time.NewTicker(gcInterval)
+		for {
+			select {
+			case v := <-r.gcc:
+				v.IsDelete = true
+				e, err := EncodePair(v)
+				if err != nil {
+					log.Println(err)
+				}
+				debugLog("apply delete")
+				_ = r.Raft.Apply(e, time.Second)
+			case <-ticker.C:
+				now := time.Now().UTC()
+				r.KVS.mtx.RLock()
+				for _, pair := range r.KVS.expire {
+					if !pair.Expire.Expire(now) {
+						continue
+					}
+					debugLog("detect expire key", pair)
+					r.gcc <- *pair
+				}
+				r.KVS.mtx.RUnlock()
+			}
+		}
+	})(r)
+	return r
 }

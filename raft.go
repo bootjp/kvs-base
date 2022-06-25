@@ -1,8 +1,13 @@
 package kvs
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
+	"errors"
 	"fmt"
+	"io"
+	"time"
 
 	transport "github.com/Jille/raft-grpc-transport"
 	"github.com/hashicorp/raft"
@@ -49,4 +54,84 @@ func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap 
 	}
 
 	return r, tm, nil
+}
+
+// check raft.FSM impl
+var _ raft.FSM = &KVS{}
+
+func (f *KVS) Apply(l *raft.Log) interface{} {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	p, err := DecodePair(l.Data)
+	if err != nil {
+		return err
+	}
+
+	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
+	if p.IsDelete {
+		debugLog("delete", *p.Key)
+		delete(f.data, *p.Key)
+		delete(f.expire, *p.Key)
+		return true
+	}
+
+	f.data[*p.Key] = &p
+	if !p.Expire.NoExpire {
+		f.expire[*p.Key] = &p
+	}
+
+	return true
+}
+
+func (f *KVS) Snapshot() (raft.FSMSnapshot, error) {
+	// Make sure that any future calls to f.Apply() don't change the snapshot.
+	return &snapshot{cloneKV(f.data)}, nil
+}
+
+func (f *KVS) Restore(r io.ReadCloser) error {
+	var decodedMap KV
+	d := gob.NewDecoder(r)
+
+	if err := d.Decode(&decodedMap); err != nil {
+		return fmt.Errorf("failed restore: %w", err)
+	}
+
+	return nil
+}
+
+type snapshot struct {
+	data KV
+}
+
+func (s *snapshot) Persist(sink raft.SnapshotSink) error {
+	b := &bytes.Buffer{}
+	e := gob.NewEncoder(b)
+
+	err := e.Encode(s.data)
+	if err != nil {
+		return fmt.Errorf("failed data encode: %w", err)
+	}
+
+	_, err = sink.Write(b.Bytes())
+	if err != nil {
+		_ = sink.Cancel()
+		return fmt.Errorf("sink.Write(): %w", err)
+	}
+	return errors.Unwrap(sink.Close())
+}
+
+func (s *snapshot) Release() {}
+
+func TTLtoTime(d time.Duration) Expire {
+	switch d.Milliseconds() {
+	default:
+		return Expire{
+			Time: time.Now().UTC().Add(d),
+		}
+	case 0:
+		return Expire{
+			NoExpire: true,
+		}
+	}
+
 }
