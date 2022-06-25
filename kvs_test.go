@@ -112,16 +112,22 @@ func Test_value_can_be_deleted(t *testing.T) {
 	want := []byte("v")
 	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want},
-	)
+		&pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
-	_, err = c.Put(context.TODO(), &pb.AddDataRequest{Key: key, Data: want})
+	_, err = c.Put(context.TODO(),
+		&pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 	if err != nil {
 		t.Fatalf("Add RPC failed: %v", err)
 	}
-	resp, err := c.Get(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -135,7 +141,7 @@ func Test_value_can_be_deleted(t *testing.T) {
 		t.Fatalf("Delete RPC failed: %v", err)
 	}
 
-	resp, err = c.Get(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err = c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -154,16 +160,21 @@ func Test_consistency_satisfy_write_after_read(t *testing.T) {
 		want := []byte(strconv.Itoa(i))
 		_, err := c.Put(
 			context.Background(),
-			&pb.AddDataRequest{Key: key, Data: want},
-		)
+			&pb.PutRequest{Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+			}})
 		if err != nil {
 			log.Fatalf("Add RPC failed: %v", err)
 		}
-		_, err = c.Put(context.TODO(), &pb.AddDataRequest{Key: key, Data: want})
+		_, err = c.Put(context.TODO(), &pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 		if err != nil {
 			t.Fatalf("Add RPC failed: %v", err)
 		}
-		resp, err := c.Get(context.TODO(), &pb.GetDataRequest{Key: key})
+		resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 		if err != nil {
 			t.Fatalf("Get RPC failed: %v", err)
 		}
@@ -180,13 +191,19 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	want := []byte("test-data")
 	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+		&pb.PutRequest{
+			Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+				Ttl:   durationpb.New(10 * time.Second),
+			},
+		},
 	)
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
 	time.Sleep(9 * time.Second)
-	resp, err := c.Get(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -196,7 +213,7 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	}
 
 	time.Sleep(1 * time.Second)
-	resp, err = c.Get(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err = c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -211,7 +228,13 @@ func Test_no_data_in_map_after_gc(t *testing.T) {
 	want := []byte("test-data")
 	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+		&pb.PutRequest{
+			Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+				Ttl:   durationpb.New(10 * time.Second),
+			},
+		},
 	)
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)

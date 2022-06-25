@@ -47,25 +47,30 @@ func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.Dele
 	}, nil
 }
 
-func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDataResponse, error) {
-	if r.checkKeyLimit(len(req.GetKey())) {
-		return &pb.AddDataResponse{
+var ErrInvalidRequest = errors.New("invalid request")
+
+func (r RPCInterface) Put(_ context.Context, req *pb.PutRequest) (*pb.PutResponse, error) {
+	if req.GetData() == nil || req.Data.GetKey() == nil || req.Data.GetValue() == nil {
+		return nil, ErrInvalidRequest
+	}
+	if r.checkKeyLimit(len(req.Data.GetKey())) {
+		return &pb.PutResponse{
 			Status:      pb.Status_ABORT,
 			CommitIndex: r.Raft.AppliedIndex(),
-		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
+		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.GetData().Key), KeyLimit)
 	}
-
-	pair := Pair{Key: &req.Key, Value: &req.Data, Expire: TTLtoTime(req.GetTtl().AsDuration())}
+	k := req.GetData().GetKey()
+	pair := Pair{Key: &k, Value: &req.GetData().Value, Expire: TTLtoTime(req.GetData().GetTtl().AsDuration())}
 	e, err := EncodePair(pair)
 	if err != nil {
-		return &pb.AddDataResponse{
+		return &pb.PutResponse{
 			Status: pb.Status_ABORT,
 		}, err
 	}
 
 	f := r.Raft.Apply(e, time.Second)
 	if err := f.Error(); err != nil {
-		return &pb.AddDataResponse{
+		return &pb.PutResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
 		}, errors.Unwrap(rafterrors.MarkRetriable(err))
@@ -73,7 +78,7 @@ func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDat
 
 	resp := f.Response()
 	if err, ok := resp.(error); ok {
-		return &pb.AddDataResponse{
+		return &pb.PutResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
 		}, errors.Unwrap(rafterrors.MarkRetriable(err))
@@ -81,21 +86,24 @@ func (r RPCInterface) Put(_ context.Context, req *pb.AddDataRequest) (*pb.AddDat
 
 	ff := r.Raft.Barrier(time.Second)
 	if err := ff.Error(); err != nil {
-		return &pb.AddDataResponse{
+		return &pb.PutResponse{
 			CommitIndex: f.Index(),
 			Status:      pb.Status_ABORT,
 		}, errors.Unwrap(rafterrors.MarkRetriable(err))
 	}
 
-	return &pb.AddDataResponse{
+	return &pb.PutResponse{
 		CommitIndex: f.Index(),
 		Status:      pb.Status_COMMIT,
 	}, nil
 }
 
-func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDataResponse, error) {
+func (r RPCInterface) Get(_ context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	if req.GetKey() == nil {
+		return nil, ErrInvalidRequest
+	}
 	if r.checkKeyLimit(len(req.GetKey())) {
-		return &pb.GetDataResponse{
+		return &pb.GetResponse{
 			Key:         req.Key,
 			Data:        nil,
 			Error:       pb.GetDataError_FETCH_ERROR,
@@ -111,7 +119,7 @@ func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDat
 			rspError = pb.GetDataError_DATA_NOT_FOUND
 		}
 
-		return &pb.GetDataResponse{
+		return &pb.GetResponse{
 			Key:         req.Key,
 			Data:        nil,
 			Error:       rspError,
@@ -119,7 +127,7 @@ func (r RPCInterface) Get(_ context.Context, req *pb.GetDataRequest) (*pb.GetDat
 		}, nil
 	}
 
-	return &pb.GetDataResponse{
+	return &pb.GetResponse{
 		Key:         req.Key,
 		Data:        *v.Value,
 		Error:       pb.GetDataError_NO_ERROR,

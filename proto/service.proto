@@ -5,16 +5,20 @@ import "google/protobuf/duration.proto";
 option go_package = "github.com/bootjp/kvs/proto";
 
 service KVS {
-	rpc Put(AddDataRequest) returns (AddDataResponse) {}
-	rpc Get(GetDataRequest) returns (GetDataResponse) {}
+	rpc Put(PutRequest) returns (PutResponse) {}
+	rpc Get(GetRequest) returns (GetResponse) {}
 	rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 	rpc Transaction(TransactionRequest) returns (TransactionResponse) {}
 }
 
-message AddDataRequest {
+message Pair {
 	bytes key = 1;
-	bytes data = 2;
+	bytes value = 2;
 	google.protobuf.Duration ttl = 3;
+}
+
+message PutRequest {
+	Pair data = 1;
 }
 
 enum Status {
@@ -31,7 +35,7 @@ message DeleteResponse {
 	Status Status = 2;
 }
 
-message AddDataResponse {
+message PutResponse {
 	uint64 commit_index = 1;
 	Status Status = 2;
 }
@@ -51,7 +55,7 @@ message TransactionResponse {
 	Status Status = 1;
 }
 
-message GetDataRequest {
+message GetRequest {
 	bytes key = 1;
 }
 
@@ -61,7 +65,7 @@ enum GetDataError {
 	DATA_NOT_FOUND = 2;
 }
 
-message GetDataResponse {
+message GetResponse {
 	uint64 read_at_index = 1;
 	GetDataError Error = 2;
 	bytes key = 10;
