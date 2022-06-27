@@ -34,6 +34,7 @@ func (r RPCInterface) Delete(_ context.Context, req *pb.DeleteRequest) (*pb.Dele
 
 	f := r.Raft.Apply(e, time.Second)
 	r.Raft.Barrier(time.Second)
+
 	if err := f.Error(); err != nil {
 		return &pb.DeleteResponse{
 			CommitIndex: f.Index(),
@@ -141,6 +142,8 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 	r.KVS.mtx.RLock()
 	defer r.KVS.mtx.RUnlock()
 
+	var txs Transaction
+
 	for s, op := range req.GetPair() {
 		if len(s) > KeyLimit {
 			return &pb.TransactionResponse{
@@ -151,20 +154,28 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 		value := op.GetData()
 		k := []byte(s)
 		pair := Pair{Key: &k, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
-		e, err := EncodePair(pair)
-		if err != nil {
-			return &pb.TransactionResponse{
-				Status: pb.Status_ABORT,
-			}, err
-		}
+		txs.Pair = append(txs.Pair, pair)
+	}
 
-		// todo transaction type
-		f := r.Raft.Apply(e, time.Second)
-		if err := f.Error(); err != nil {
-			return &pb.TransactionResponse{
-				Status: pb.Status_ABORT,
-			}, errors.Unwrap(rafterrors.MarkRetriable(err))
-		}
+	e, err := EncodeTrans(txs)
+	if err != nil {
+		return &pb.TransactionResponse{
+			Status: pb.Status_ABORT,
+		}, err
+	}
+
+	f := r.Raft.Apply(e, time.Second)
+	if err := f.Error(); err != nil {
+		return &pb.TransactionResponse{
+			Status: pb.Status_ABORT,
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
+	}
+
+	b := r.Raft.Barrier(time.Second)
+	if err := b.Error(); err != nil {
+		return &pb.TransactionResponse{
+			Status: pb.Status_ABORT,
+		}, errors.Unwrap(rafterrors.MarkRetriable(err))
 	}
 
 	return &pb.TransactionResponse{

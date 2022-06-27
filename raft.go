@@ -60,19 +60,9 @@ func NewRaft(_ context.Context, myID, myAddress string, fsm raft.FSM, bootstrap 
 var _ raft.FSM = &KVS{}
 
 func (k *KVS) Apply(l *raft.Log) interface{} {
-	p, err := DecodePair(l.Data)
-	if err != nil {
-		return err
-	}
-
-	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
-	if p.IsDelete {
-		err := k.Delete(p.Key)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := k.Set(&p)
+	if err := k.handlePair(l.Data); err != nil {
+		// try transaction type
+		err := k.handleTransaction(l.Data)
 		if err != nil {
 			return err
 		}

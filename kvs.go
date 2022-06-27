@@ -55,6 +55,9 @@ type KVS struct {
 	mtx    sync.RWMutex
 	data   KV
 	expire KV
+
+	txMtx sync.Mutex
+	txKey map[uint64]struct{}
 }
 
 var ErrNotFound = errors.New("not found")
@@ -101,6 +104,73 @@ func (k *KVS) Set(p *Pair) error {
 	return nil
 }
 
+const transactionLockWait = time.Millisecond * 100
+
+var ErrTransactionAbort = errors.New("transaction abort")
+
+var ErrFailedDecode = errors.New("failed decode")
+
+func (k *KVS) handlePair(b []byte) error {
+	p, err := DecodePair(b)
+	if err != nil {
+		return ErrFailedDecode
+	}
+
+	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
+	if p.IsDelete {
+		if err := k.Delete(p.Key); err != nil {
+			return err
+		}
+
+	} else {
+		if err := k.Set(&p); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k *KVS) handleTransaction(b []byte) error {
+	k.mtx.Lock()
+	defer k.mtx.Unlock()
+
+	t, err := DecodeTrans(b)
+	if err != nil {
+		return ErrFailedDecode
+	}
+
+	keys := map[uint64]struct{}{}
+	for _, pair := range t.Pair {
+		keys[k.hash(pair.Key)] = struct{}{}
+	}
+
+	for !k.txMtx.TryLock() {
+		time.Sleep(transactionLockWait)
+	}
+	defer k.txMtx.Unlock()
+
+	k.txKey = keys
+
+	// todo rollback
+	for i, pair := range t.Pair {
+		switch {
+		case pair.IsDelete:
+			err = k.Delete(pair.Key)
+		default:
+			err = k.Set(&t.Pair[i])
+		}
+		if err != nil {
+			return ErrTransactionAbort
+		}
+	}
+	// todo prevent dirty read by mark as committed
+
+	k.txKey = map[uint64]struct{}{}
+
+	return nil
+}
+
 func (k *KVS) hash(b *[]byte) uint64 {
 	h := fnv.New64()
 	if _, err := h.Write(*b); err != nil {
@@ -141,7 +211,7 @@ func DecodePair(b []byte) (Pair, error) {
 	return pair, nil
 }
 
-func EncodeTrans(p Pair) ([]byte, error) {
+func EncodeTrans(p Transaction) ([]byte, error) {
 	b := &bytes.Buffer{}
 	e := gob.NewEncoder(b)
 
