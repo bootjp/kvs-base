@@ -27,14 +27,16 @@ func init() {
 const KeyLimit = 512
 
 type Pair struct {
-	Key      *[]byte
-	Value    *[]byte
-	IsDelete bool
-	Expire   Expire
+	Key       *[]byte
+	Value     *[]byte
+	IsDelete  bool
+	Expire    Expire
+	Committed bool
 }
 
 type Transaction struct {
-	Pair []Pair
+	Pair    []Pair
+	Aborted KV
 }
 
 type Expire struct {

@@ -142,7 +142,9 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 	r.KVS.mtx.RLock()
 	defer r.KVS.mtx.RUnlock()
 
-	var txs Transaction
+	txs := Transaction{
+		Aborted: KV{},
+	}
 
 	for s, op := range req.GetPair() {
 		if len(s) > KeyLimit {
@@ -155,6 +157,8 @@ func (r RPCInterface) Transaction(_ context.Context, req *pb.TransactionRequest)
 		k := []byte(s)
 		pair := Pair{Key: &k, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
 		txs.Pair = append(txs.Pair, pair)
+		// ignore error because when nodata set nil data
+		txs.Aborted[r.KVS.hash(pair.Key)], _ = r.KVS.Get(pair.Key)
 	}
 
 	e, err := EncodeTrans(txs)

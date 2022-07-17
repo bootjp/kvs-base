@@ -250,6 +250,25 @@ func Test_no_data_in_map_after_gc(t *testing.T) {
 	}
 }
 
+func Test_can_transaction(t *testing.T) {
+	c := client()
+	//key := []byte("test-key-gc")
+	want := []byte("test-data")
+	p := map[string]*pb.Operation{"test-key": {OP: &pb.Operation_Data{Data: want}}}
+	_, err := c.Transaction(
+		context.Background(),
+		&pb.TransactionRequest{
+			Pair: p,
+		},
+	)
+	if err != nil {
+		log.Fatalf("transaction RPC failed: %v", err)
+	}
+
+	time.Sleep(30 * time.Second)
+
+}
+
 func client() pb.KVSClient {
 	retryOpts := []grpcretry.CallOption{
 		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
