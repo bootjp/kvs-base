@@ -24,7 +24,7 @@ heavy_test: clean build
 proto: FORCE
 	mkdir -p $(CURDIR)/bin
 	(cd third_party/proto && ./generate_go.sh)
-	GO111MODULE=on go build ./proto/pkg/...
+	GO111MODULE=on go build ./third_party/proto/pkg/...
 
 FORCE: ;
 
