@@ -1,12 +1,13 @@
 package server
 
 import (
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/storage/standalone_storage"
 	"os"
 	"testing"
 
 	"github.com/pingcap-incubator/tinykv/kv/config"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/storage/standalone_storage"
+	//"github.com/pingcap-incubator/tinykv/kv/storage"
 	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
 	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +50,10 @@ func cleanUpTestData(conf *config.Config) error {
 
 func TestRawGet1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	//defer cleanUpTestData(conf)
@@ -69,7 +73,10 @@ func TestRawGet1(t *testing.T) {
 
 func TestRawGetNotFound1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -87,7 +94,10 @@ func TestRawGetNotFound1(t *testing.T) {
 
 func TestRawPut1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -100,7 +110,7 @@ func TestRawPut1(t *testing.T) {
 		Cf:    cf,
 	}
 
-	_, err := server.RawPut(nil, req)
+	_, err = server.RawPut(nil, req)
 
 	got, err := Get(s, cf, []byte{99})
 	assert.Nil(t, err)
@@ -109,7 +119,10 @@ func TestRawPut1(t *testing.T) {
 
 func TestRawGetAfterRawPut1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -120,7 +133,7 @@ func TestRawGetAfterRawPut1(t *testing.T) {
 		Value: []byte{42},
 		Cf:    engine_util.CfDefault,
 	}
-	_, err := server.RawPut(nil, put1)
+	_, err = server.RawPut(nil, put1)
 	assert.Nil(t, err)
 
 	put2 := &kvrpcpb.RawPutRequest{
@@ -150,7 +163,10 @@ func TestRawGetAfterRawPut1(t *testing.T) {
 
 func TestRawGetAfterRawDelete1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -168,7 +184,7 @@ func TestRawGetAfterRawDelete1(t *testing.T) {
 		Cf:  cf,
 	}
 
-	_, err := server.RawDelete(nil, delete)
+	_, err = server.RawDelete(nil, delete)
 	assert.Nil(t, err)
 
 	resp, err := server.RawGet(nil, get)
@@ -178,7 +194,10 @@ func TestRawGetAfterRawDelete1(t *testing.T) {
 
 func TestRawDelete1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -192,7 +211,7 @@ func TestRawDelete1(t *testing.T) {
 		Cf:  cf,
 	}
 
-	_, err := server.RawDelete(nil, req)
+	_, err = server.RawDelete(nil, req)
 	assert.Nil(t, err)
 
 	val, err := Get(s, cf, []byte{99})
@@ -202,7 +221,10 @@ func TestRawDelete1(t *testing.T) {
 
 func TestRawScan1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -235,7 +257,10 @@ func TestRawScan1(t *testing.T) {
 
 func TestRawScanAfterRawPut1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -261,7 +286,7 @@ func TestRawScanAfterRawPut1(t *testing.T) {
 
 	expectedKeys := [][]byte{{1}, {2}, {3}, {4}, {5}}
 
-	_, err := server.RawPut(nil, put)
+	_, err = server.RawPut(nil, put)
 	assert.Nil(t, err)
 
 	resp, err := server.RawScan(nil, scan)
@@ -275,7 +300,10 @@ func TestRawScanAfterRawPut1(t *testing.T) {
 
 func TestRawScanAfterRawDelete1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)
@@ -300,7 +328,7 @@ func TestRawScanAfterRawDelete1(t *testing.T) {
 
 	expectedKeys := [][]byte{{1}, {2}, {4}}
 
-	_, err := server.RawDelete(nil, delete)
+	_, err = server.RawDelete(nil, delete)
 	assert.Nil(t, err)
 
 	resp, err := server.RawScan(nil, scan)
@@ -314,7 +342,10 @@ func TestRawScanAfterRawDelete1(t *testing.T) {
 
 func TestIterWithRawDelete1(t *testing.T) {
 	conf := config.NewTestConfig()
-	s := standalone_storage.NewStandAloneStorage(conf)
+	s, err := standalone_storage.NewStandAloneStorage(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)

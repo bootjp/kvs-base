@@ -2,15 +2,15 @@ package server
 
 import (
 	"context"
-
-	"github.com/pingcap-incubator/tinykv/kv/coprocessor"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/storage/raft_storage"
-	"github.com/pingcap-incubator/tinykv/kv/transaction/latches"
-	coppb "github.com/pingcap-incubator/tinykv/proto/pkg/coprocessor"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/tinykvpb"
+	"github.com/bootjp/kvs-base/kv/coprocessor"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/storage/raft_storage"
+	"github.com/bootjp/kvs-base/kv/transaction/latches"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
+	"github.com/bootjp/kvs-base/proto/pkg/tinykvpb"
 	"github.com/pingcap/tidb/kv"
+
+	coppb "github.com/bootjp/kvs-base/proto/pkg/coprocessor"
 )
 
 var _ tinykvpb.TinyKvServer = new(Server)

@@ -2,11 +2,11 @@ package standalone_storage
 
 import (
 	"errors"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/pingcap-incubator/tinykv/kv/config"
 	"github.com/pingcap-incubator/tinykv/kv/storage"
 	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
 )
 
 // StandAloneStorage is an implementation of `Storage` for a single-node TinyKV instance. It does not
@@ -77,11 +77,9 @@ func (s StandAloneStorageReader) GetCF(cf string, key []byte) ([]byte, error) {
 }
 
 func (s StandAloneStorageReader) IterCF(cf string) engine_util.DBIterator {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (s StandAloneStorageReader) Close() {
-	// TODO implement me
-	panic("implement me")
+	//s.
 }
