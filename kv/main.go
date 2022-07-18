@@ -51,7 +51,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// var err error
-	//if conf.Raft {
+	// if conf.Raft {
 	//	store = raft_storage.NewRaftStorage(conf)
 	//} else {
 	//	if store, err = standalone_storage.NewStandAloneStorage(conf); err != nil {

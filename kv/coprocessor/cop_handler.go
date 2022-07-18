@@ -215,9 +215,9 @@ const (
 // flagsToStatementContext creates a StatementContext from a `tipb.SelectRequest.Flags`.
 func flagsToStatementContext(flags uint64) *stmtctx.StatementContext {
 	sc := &stmtctx.StatementContext{
-		IgnoreTruncate:    (flags & FlagIgnoreTruncate) > 0,
-		TruncateAsWarning: (flags & FlagTruncateAsWarning) > 0,
-		//PadCharToFullLength: (flags & FlagPadCharToFullLength) > 0,
+		IgnoreTruncate:      (flags & FlagIgnoreTruncate) > 0,
+		TruncateAsWarning:   (flags & FlagTruncateAsWarning) > 0,
+		PadCharToFullLength: (flags & FlagPadCharToFullLength) > 0,
 	}
 	return sc
 }
