@@ -110,18 +110,24 @@ func Test_value_can_be_deleted(t *testing.T) {
 	c := client()
 	key := []byte("test-key")
 	want := []byte("v")
-	_, err := c.AddData(
+	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want},
-	)
+		&pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
-	_, err = c.AddData(context.TODO(), &pb.AddDataRequest{Key: key, Data: want})
+	_, err = c.Put(context.TODO(),
+		&pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 	if err != nil {
 		t.Fatalf("Add RPC failed: %v", err)
 	}
-	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -130,12 +136,12 @@ func Test_value_can_be_deleted(t *testing.T) {
 		t.Fatalf("consistency check failed want %v got %v", want, resp.Data)
 	}
 
-	_, err = c.DeleteData(context.TODO(), &pb.DeleteRequest{Key: key})
+	_, err = c.Delete(context.TODO(), &pb.DeleteRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Delete RPC failed: %v", err)
 	}
 
-	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err = c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -152,18 +158,23 @@ func Test_consistency_satisfy_write_after_read(t *testing.T) {
 
 	for i := 0; i < 99999; i++ {
 		want := []byte(strconv.Itoa(i))
-		_, err := c.AddData(
+		_, err := c.Put(
 			context.Background(),
-			&pb.AddDataRequest{Key: key, Data: want},
-		)
+			&pb.PutRequest{Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+			}})
 		if err != nil {
 			log.Fatalf("Add RPC failed: %v", err)
 		}
-		_, err = c.AddData(context.TODO(), &pb.AddDataRequest{Key: key, Data: want})
+		_, err = c.Put(context.TODO(), &pb.PutRequest{Data: &pb.Pair{
+			Key:   key,
+			Value: want,
+		}})
 		if err != nil {
 			t.Fatalf("Add RPC failed: %v", err)
 		}
-		resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+		resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 		if err != nil {
 			t.Fatalf("Get RPC failed: %v", err)
 		}
@@ -178,15 +189,21 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	c := client()
 	key := []byte("test-key")
 	want := []byte("test-data")
-	_, err := c.AddData(
+	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+		&pb.PutRequest{
+			Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+				Ttl:   durationpb.New(10 * time.Second),
+			},
+		},
 	)
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
 	time.Sleep(9 * time.Second)
-	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err := c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -196,7 +213,7 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	}
 
 	time.Sleep(1 * time.Second)
-	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
+	resp, err = c.Get(context.TODO(), &pb.GetRequest{Key: key})
 	if err != nil {
 		t.Fatalf("Get RPC failed: %v", err)
 	}
@@ -209,25 +226,47 @@ func Test_no_data_in_map_after_gc(t *testing.T) {
 	c := client()
 	key := []byte("test-key-gc")
 	want := []byte("test-data")
-	_, err := c.AddData(
+	_, err := c.Put(
 		context.Background(),
-		&pb.AddDataRequest{Key: key, Data: want, Ttl: durationpb.New(10 * time.Second)},
+		&pb.PutRequest{
+			Data: &pb.Pair{
+				Key:   key,
+				Value: want,
+				Ttl:   durationpb.New(10 * time.Second),
+			},
+		},
 	)
 	if err != nil {
 		log.Fatalf("Add RPC failed: %v", err)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], key)
-
 	time.Sleep(30 * time.Second)
 
 	for nodeIndex, kv := range kvs {
-		v, ok := kv.data[tmp]
+		v, ok := kv.data[kv.hash(&key)]
 		if ok {
 			t.Fatalf("gc failed %s got %v now time : %v", nodeIndex, v, time.Now().UTC())
 		}
 	}
+}
+
+func Test_can_transaction(t *testing.T) {
+	c := client()
+	//key := []byte("test-key-gc")
+	want := []byte("test-data")
+	p := map[string]*pb.Operation{"test-key": {OP: &pb.Operation_Data{Data: want}}}
+	_, err := c.Transaction(
+		context.Background(),
+		&pb.TransactionRequest{
+			Pair: p,
+		},
+	)
+	if err != nil {
+		log.Fatalf("transaction RPC failed: %v", err)
+	}
+
+	time.Sleep(30 * time.Second)
+
 }
 
 func client() pb.KVSClient {

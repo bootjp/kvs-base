@@ -21,7 +21,7 @@ test: clean build
 heavy_test: clean build
 	bash ./hammer.sh
 
-proto: FORCE
+proto:
 	mkdir -p $(CURDIR)/bin
 	(cd third_party/proto && ./generate_go.sh)
 	GO111MODULE=on go build ./third_party/proto/pkg/...
