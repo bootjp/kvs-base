@@ -40,7 +40,7 @@ func NewCheckerController(ctx context.Context, cluster opt.Cluster, opController
 }
 
 // CheckRegion will check the region and add a new operator if needed.
-func (c *CheckerController) CheckRegion(region *core.RegionInfo) (bool, []*operator.Operator) { //return checkerIsBusy,ops
+func (c *CheckerController) CheckRegion(region *core.RegionInfo) (bool, []*operator.Operator) { // return checkerIsBusy,ops
 	// If PD has restarted, it need to check learners added before and promote them.
 	// Don't check isRaftLearnerEnabled cause it maybe disable learner feature but there are still some learners to promote.
 	opController := c.opController

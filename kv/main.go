@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/bootjp/kvs-base/kv/storage/standalone_storage"
 	"net"
 	_ "net/http/pprof"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"github.com/pingcap-incubator/tinykv/kv/server"
 	"github.com/pingcap-incubator/tinykv/kv/storage"
 	"github.com/pingcap-incubator/tinykv/kv/storage/raft_storage"
-	"github.com/pingcap-incubator/tinykv/kv/storage/standalone_storage"
 	"github.com/pingcap-incubator/tinykv/log"
 	"github.com/pingcap-incubator/tinykv/proto/pkg/tinykvpb"
 	"google.golang.org/grpc"
@@ -48,16 +48,19 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	log.Infof("Server started with conf %+v", conf)
 
-	var storage storage.Storage
+	var store storage.Storage
+	var err error
 	if conf.Raft {
-		storage = raft_storage.NewRaftStorage(conf)
+		store = raft_storage.NewRaftStorage(conf)
 	} else {
-		storage = standalone_storage.NewStandAloneStorage(conf)
+		if store, err = standalone_storage.NewStandAloneStorage(conf); err != nil {
+			log.Fatal(err)
+		}
 	}
-	if err := storage.Start(); err != nil {
+	if err := store.Start(); err != nil {
 		log.Fatal(err)
 	}
-	server := server.NewServer(storage)
+	server := server.NewServer(store)
 
 	var alivePolicy = keepalive.EnforcementPolicy{
 		MinTime:             2 * time.Second, // If a client pings more than once every 2 seconds, terminate the connection
