@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/operator"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/opt"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/operator"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/opt"
 	"github.com/pingcap/log"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

@@ -2,12 +2,14 @@ package standalone_storage
 
 import (
 	"errors"
+	"github.com/bootjp/kvs-base/kv/config"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
 	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/pingcap-incubator/tinykv/kv/config"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
 )
+
+var _ storage.Storage = &StandAloneStorage{}
 
 // StandAloneStorage is an implementation of `Storage` for a single-node TinyKV instance. It does not
 // communicate with other nodes and all data is stored locally.
@@ -31,10 +33,10 @@ func (s *StandAloneStorage) Start() error {
 func (s *StandAloneStorage) Stop() error {
 	return s.db.Close()
 }
-
 func (s *StandAloneStorage) Reader(ctx *kvrpcpb.Context) (storage.StorageReader, error) {
+
 	return StandAloneStorageReader{
-		tx: s.db.NewTransaction(false),
+		db: s.db,
 	}, nil
 }
 
@@ -50,7 +52,6 @@ func (s *StandAloneStorage) Write(ctx *kvrpcpb.Context, batch []storage.Modify) 
 }
 
 type StandAloneStorageReader struct {
-	tx *badger.Txn
 	db *badger.DB
 }
 
@@ -81,5 +82,4 @@ func (s StandAloneStorageReader) IterCF(cf string) engine_util.DBIterator {
 }
 
 func (s StandAloneStorageReader) Close() {
-	//s.
 }

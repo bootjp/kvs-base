@@ -16,7 +16,7 @@ package schedulers
 import (
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
 	"github.com/pkg/errors"
 )
 

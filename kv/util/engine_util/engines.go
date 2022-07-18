@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/log"
+	"github.com/bootjp/kvs-base/log"
 )
 
 // Engines keeps references to and data for the engines used by unistore.

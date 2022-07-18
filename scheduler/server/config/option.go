@@ -19,9 +19,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/kv"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/kv"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule"
 )
 
 // ScheduleOption is a wrapper to access the configuration safely.

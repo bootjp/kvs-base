@@ -3,8 +3,8 @@ package snap
 import (
 	"github.com/Connor1996/badger"
 	"github.com/Connor1996/badger/y"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 )
 
 // snapBuilder builds snapshot files.

@@ -3,8 +3,8 @@ package util
 import (
 	"fmt"
 
-	"github.com/pingcap-incubator/tinykv/proto/pkg/errorpb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/errorpb"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 	"github.com/pingcap/errors"
 )
 

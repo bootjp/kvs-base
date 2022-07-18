@@ -3,10 +3,10 @@ package mvcc
 import (
 	"encoding/binary"
 
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/util/codec"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/tsoutil"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/util/codec"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
+	"github.com/bootjp/kvs-base/scheduler/pkg/tsoutil"
 )
 
 // KeyError is a wrapper type so we can implement the `error` interface.

@@ -1,12 +1,12 @@
 package raftstore
 
 import (
+	"github.com/bootjp/kvs-base/kv/raftstore/message"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_cmdpb"
 	"sync"
 	"sync/atomic"
 
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/message"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_cmdpb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_serverpb"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_serverpb"
 
 	"github.com/pingcap/errors"
 )

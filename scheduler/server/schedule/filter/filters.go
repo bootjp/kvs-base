@@ -14,9 +14,9 @@
 package filter
 
 import (
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/slice"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/opt"
+	"github.com/bootjp/kvs-base/scheduler/pkg/slice"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/opt"
 )
 
 //revive:disable:unused-parameter

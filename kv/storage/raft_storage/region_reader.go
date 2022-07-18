@@ -2,9 +2,9 @@ package raft_storage
 
 import (
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/util"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/kv/raftstore/util"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 )
 
 type RegionReader struct {

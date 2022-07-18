@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/log"
+	"github.com/bootjp/kvs-base/log"
 )
 
 type Config struct {

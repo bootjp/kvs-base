@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 )
 
 // Storage represents the internal-facing server part of TinyKV, it handles sending and receiving from other

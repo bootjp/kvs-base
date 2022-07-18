@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

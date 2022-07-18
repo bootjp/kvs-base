@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/message"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/scheduler_client"
-	"github.com/pingcap-incubator/tinykv/kv/util/worker"
-	"github.com/pingcap-incubator/tinykv/log"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_cmdpb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/schedulerpb"
+	"github.com/bootjp/kvs-base/kv/raftstore/message"
+	"github.com/bootjp/kvs-base/kv/raftstore/scheduler_client"
+	"github.com/bootjp/kvs-base/kv/util/worker"
+	"github.com/bootjp/kvs-base/log"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_cmdpb"
+	"github.com/bootjp/kvs-base/proto/pkg/schedulerpb"
 	"github.com/shirou/gopsutil/disk"
 )
 

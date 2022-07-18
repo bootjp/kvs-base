@@ -18,8 +18,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/pingcap-incubator/tinykv/log"
-	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+	"github.com/bootjp/kvs-base/log"
+	pb "github.com/bootjp/kvs-base/proto/pkg/eraftpb"
 )
 
 // ErrCompacted is returned by Storage.Entries/Compact when a requested

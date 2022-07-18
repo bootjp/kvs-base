@@ -4,14 +4,14 @@ import (
 	"encoding/hex"
 
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/kv/config"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/message"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/util"
-	"github.com/pingcap-incubator/tinykv/kv/util/codec"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/kv/util/worker"
-	"github.com/pingcap-incubator/tinykv/log"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/kv/config"
+	"github.com/bootjp/kvs-base/kv/raftstore/message"
+	"github.com/bootjp/kvs-base/kv/raftstore/util"
+	"github.com/bootjp/kvs-base/kv/util/codec"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/kv/util/worker"
+	"github.com/bootjp/kvs-base/log"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 )
 
 type SplitCheckTask struct {

@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/etcdutil"
+	"github.com/bootjp/kvs-base/scheduler/pkg/etcdutil"
 	"github.com/pingcap/log"
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"

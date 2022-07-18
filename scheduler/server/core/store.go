@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/schedulerpb"
 	"github.com/gogo/protobuf/proto"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/schedulerpb"
 	"github.com/pingcap/errcode"
 	"github.com/pingcap/log"
 	"go.uber.org/zap"

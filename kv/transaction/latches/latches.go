@@ -3,7 +3,7 @@ package latches
 import (
 	"sync"
 
-	"github.com/pingcap-incubator/tinykv/kv/transaction/mvcc"
+	"github.com/bootjp/kvs-base/kv/transaction/mvcc"
 )
 
 // Latching provides atomicity of TinyKV commands. This should not be confused with SQL transactions which provide atomicity

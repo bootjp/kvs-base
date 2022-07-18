@@ -11,11 +11,11 @@ import (
 
 	_ "github.com/gogo/protobuf/gogoproto"
 
-	coprocessor "github.com/pingcap-incubator/tinykv/proto/pkg/coprocessor"
+	coprocessor "github.com/bootjp/kvs-base/proto/pkg/coprocessor"
 
-	kvrpcpb "github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
+	kvrpcpb "github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 
-	raft_serverpb "github.com/pingcap-incubator/tinykv/proto/pkg/raft_serverpb"
+	raft_serverpb "github.com/bootjp/kvs-base/proto/pkg/raft_serverpb"
 
 	context "golang.org/x/net/context"
 

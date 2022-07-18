@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/kv/util/worker"
+	"github.com/bootjp/kvs-base/kv/util/worker"
 
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/scheduler_client"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/kv/raftstore/scheduler_client"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 	"github.com/pingcap/errors"
 )
 

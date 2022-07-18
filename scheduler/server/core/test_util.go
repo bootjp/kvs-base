@@ -16,8 +16,8 @@ package core
 import (
 	"math"
 
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/schedulerpb"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/schedulerpb"
 )
 
 // SplitRegions split a set of RegionInfo by the middle of regionKey

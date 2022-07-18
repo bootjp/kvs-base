@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/kv/server"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/transaction/mvcc"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
+	"github.com/bootjp/kvs-base/kv/server"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/transaction/mvcc"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 	"github.com/stretchr/testify/assert"
 )
 

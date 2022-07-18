@@ -18,13 +18,13 @@ import (
 	"time"
 
 	"github.com/Connor1996/badger/y"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/transaction/mvcc"
+	"github.com/bootjp/kvs-base/proto/pkg/coprocessor"
 	"github.com/golang/protobuf/proto"
 	"github.com/juju/errors"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/transaction/mvcc"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/coprocessor"
 
-	"github.com/pingcap-incubator/tinykv/kv/coprocessor/rowcodec"
+	"github.com/bootjp/kvs-base/kv/coprocessor/rowcodec"
 	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/parser/ast"
 	"github.com/pingcap/tidb/parser/charset"

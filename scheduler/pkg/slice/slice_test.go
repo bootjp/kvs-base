@@ -16,7 +16,7 @@ package slice_test
 import (
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/slice"
+	"github.com/bootjp/kvs-base/scheduler/pkg/slice"
 	. "github.com/pingcap/check"
 )
 

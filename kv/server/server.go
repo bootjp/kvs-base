@@ -5,6 +5,7 @@ import (
 	"github.com/bootjp/kvs-base/kv/coprocessor"
 	"github.com/bootjp/kvs-base/kv/storage"
 	"github.com/bootjp/kvs-base/kv/storage/raft_storage"
+	"github.com/bootjp/kvs-base/kv/storage/standalone_storage"
 	"github.com/bootjp/kvs-base/kv/transaction/latches"
 	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 	"github.com/bootjp/kvs-base/proto/pkg/tinykvpb"
@@ -26,7 +27,7 @@ type Server struct {
 	copHandler *coprocessor.CopHandler
 }
 
-func NewServer(storage storage.Storage) *Server {
+func NewServer(storage *standalone_storage.StandAloneStorage) *Server {
 	return &Server{
 		storage: storage,
 		Latches: latches.NewLatches(),

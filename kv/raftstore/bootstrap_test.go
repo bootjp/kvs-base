@@ -3,10 +3,10 @@ package raftstore
 import (
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/meta"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/util"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/kv/raftstore/meta"
+	"github.com/bootjp/kvs-base/kv/raftstore/util"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
 	"github.com/stretchr/testify/require"
 )
 

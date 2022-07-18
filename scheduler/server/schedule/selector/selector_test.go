@@ -16,9 +16,9 @@ package selector
 import (
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/mock/mockcluster"
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/mock/mockoption"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/pkg/mock/mockcluster"
+	"github.com/bootjp/kvs-base/scheduler/pkg/mock/mockoption"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
 	. "github.com/pingcap/check"
 )
 

@@ -7,10 +7,10 @@ import (
 	"math"
 	"sort"
 
+	"github.com/bootjp/kvs-base/kv/coprocessor/rowcodec"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/transaction/mvcc"
 	"github.com/juju/errors"
-	"github.com/pingcap-incubator/tinykv/kv/coprocessor/rowcodec"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/transaction/mvcc"
 	"github.com/pingcap/tidb/expression"
 	"github.com/pingcap/tidb/expression/aggregation"
 	"github.com/pingcap/tidb/kv"

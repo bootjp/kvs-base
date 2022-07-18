@@ -14,10 +14,10 @@
 package schedule
 
 import (
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/mock/mockcluster"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/operator"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/scheduler/pkg/mock/mockcluster"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/operator"
 )
 
 // ApplyOperatorStep applies operator step. Only for test purpose.

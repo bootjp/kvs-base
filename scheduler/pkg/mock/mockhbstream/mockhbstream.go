@@ -18,8 +18,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/pingcap-incubator/tinykv/proto/pkg/schedulerpb"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
+	"github.com/bootjp/kvs-base/proto/pkg/schedulerpb"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
 )
 
 // HeartbeatStream is used to mock HeartbeatStream for test use.

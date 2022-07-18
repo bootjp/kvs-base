@@ -16,9 +16,9 @@ package selector
 import (
 	"math/rand"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/filter"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/schedule/opt"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/filter"
+	"github.com/bootjp/kvs-base/scheduler/server/schedule/opt"
 )
 
 // ReplicaSelector selects source/target store candidates based on their

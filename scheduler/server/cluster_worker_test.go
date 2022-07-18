@@ -14,10 +14,10 @@
 package server
 
 import (
-	"github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/schedulerpb"
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/testutil"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/core"
+	"github.com/bootjp/kvs-base/proto/pkg/metapb"
+	"github.com/bootjp/kvs-base/proto/pkg/schedulerpb"
+	"github.com/bootjp/kvs-base/scheduler/pkg/testutil"
+	"github.com/bootjp/kvs-base/scheduler/server/core"
 	. "github.com/pingcap/check"
 )
 

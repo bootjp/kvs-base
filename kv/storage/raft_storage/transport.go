@@ -3,10 +3,10 @@ package raft_storage
 import (
 	"sync"
 
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/message"
-	"github.com/pingcap-incubator/tinykv/kv/util/worker"
-	"github.com/pingcap-incubator/tinykv/log"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_serverpb"
+	"github.com/bootjp/kvs-base/kv/raftstore/message"
+	"github.com/bootjp/kvs-base/kv/util/worker"
+	"github.com/bootjp/kvs-base/log"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_serverpb"
 )
 
 type ServerTransport struct {

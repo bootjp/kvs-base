@@ -1,15 +1,14 @@
 package server
 
 import (
-	"github.com/bootjp/kvs-base/kv/storage"
-	"github.com/bootjp/kvs-base/kv/storage/standalone_storage"
 	"os"
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/kv/config"
-	//"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
+	"github.com/bootjp/kvs-base/kv/config"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/storage/standalone_storage"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/proto/pkg/kvrpcpb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,7 +55,7 @@ func TestRawGet1(t *testing.T) {
 	}
 	s.Start()
 	server := NewServer(s)
-	//defer cleanUpTestData(conf)
+	// defer cleanUpTestData(conf)
 	//defer s.Stop()
 	//
 	cf := engine_util.CfDefault
@@ -198,6 +197,7 @@ func TestRawDelete1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	s.Start()
 	server := NewServer(s)
 	defer cleanUpTestData(conf)

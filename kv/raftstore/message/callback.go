@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_cmdpb"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_cmdpb"
 )
 
 type Callback struct {

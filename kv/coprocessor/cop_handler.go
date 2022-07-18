@@ -17,12 +17,12 @@ import (
 	"bytes"
 	"time"
 
+	"github.com/bootjp/kvs-base/kv/coprocessor/rowcodec"
+	"github.com/bootjp/kvs-base/kv/storage"
+	"github.com/bootjp/kvs-base/kv/transaction/mvcc"
+	"github.com/bootjp/kvs-base/proto/pkg/coprocessor"
 	"github.com/golang/protobuf/proto"
 	"github.com/juju/errors"
-	"github.com/pingcap-incubator/tinykv/kv/coprocessor/rowcodec"
-	"github.com/pingcap-incubator/tinykv/kv/storage"
-	"github.com/pingcap-incubator/tinykv/kv/transaction/mvcc"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/coprocessor"
 	"github.com/pingcap/tidb/expression"
 	"github.com/pingcap/tidb/expression/aggregation"
 	"github.com/pingcap/tidb/kv"
@@ -215,9 +215,9 @@ const (
 // flagsToStatementContext creates a StatementContext from a `tipb.SelectRequest.Flags`.
 func flagsToStatementContext(flags uint64) *stmtctx.StatementContext {
 	sc := &stmtctx.StatementContext{
-		IgnoreTruncate:      (flags & FlagIgnoreTruncate) > 0,
-		TruncateAsWarning:   (flags & FlagTruncateAsWarning) > 0,
-		PadCharToFullLength: (flags & FlagPadCharToFullLength) > 0,
+		IgnoreTruncate:    (flags & FlagIgnoreTruncate) > 0,
+		TruncateAsWarning: (flags & FlagTruncateAsWarning) > 0,
+		//PadCharToFullLength: (flags & FlagPadCharToFullLength) > 0,
 	}
 	return sc
 }

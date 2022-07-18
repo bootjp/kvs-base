@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pingcap-incubator/tinykv/scheduler/pkg/testutil"
-	"github.com/pingcap-incubator/tinykv/scheduler/server/config"
+	"github.com/bootjp/kvs-base/scheduler/pkg/testutil"
+	"github.com/bootjp/kvs-base/scheduler/server/config"
 	. "github.com/pingcap/check"
 )
 

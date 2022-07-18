@@ -17,7 +17,7 @@ package raft
 import (
 	"errors"
 
-	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+	pb "github.com/bootjp/kvs-base/proto/pkg/eraftpb"
 )
 
 // None is a placeholder node ID used when there is no leader.

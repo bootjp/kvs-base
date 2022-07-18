@@ -86,7 +86,7 @@ func (s *testLogSuite) TestLogging(c *C) {
 
 	log.SetOutput(s.buf)
 
-	tlog := capnslog.NewPackageLogger("github.com/pingcap-incubator/tinykv/scheduler/pkg/logutil", "test")
+	tlog := capnslog.NewPackageLogger("github.com/bootjp/kvs-base/scheduler/pkg/logutil", "test")
 
 	tlog.Infof("[this message should not be sent to buf]")
 	c.Assert(s.buf.Len(), Equals, 0)

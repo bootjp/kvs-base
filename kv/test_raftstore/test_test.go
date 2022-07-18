@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/Connor1996/badger"
-	"github.com/pingcap-incubator/tinykv/kv/config"
-	"github.com/pingcap-incubator/tinykv/kv/raftstore/meta"
-	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
-	"github.com/pingcap-incubator/tinykv/log"
-	"github.com/pingcap-incubator/tinykv/proto/pkg/raft_cmdpb"
+	"github.com/bootjp/kvs-base/kv/config"
+	"github.com/bootjp/kvs-base/kv/raftstore/meta"
+	"github.com/bootjp/kvs-base/kv/util/engine_util"
+	"github.com/bootjp/kvs-base/log"
+	"github.com/bootjp/kvs-base/proto/pkg/raft_cmdpb"
 	"github.com/stretchr/testify/assert"
 )
 

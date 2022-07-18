@@ -10,8 +10,8 @@ import (
 
 	proto "github.com/golang/protobuf/proto"
 
-	eraftpb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
-	metapb "github.com/pingcap-incubator/tinykv/proto/pkg/metapb"
+	eraftpb "github.com/bootjp/kvs-base/proto/pkg/eraftpb"
+	metapb "github.com/bootjp/kvs-base/proto/pkg/metapb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
