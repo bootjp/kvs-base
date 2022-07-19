@@ -55,11 +55,13 @@ func TestRawGet1(t *testing.T) {
 	}
 	s.Start()
 	server := NewServer(s)
-	// defer cleanUpTestData(conf)
-	// defer s.Stop()
-	//
+
+	defer cleanUpTestData(conf)
+	defer s.Stop()
+
 	cf := engine_util.CfDefault
-	Set(s, cf, []byte{99}, []byte{42})
+	err = Set(s, cf, []byte{99}, []byte{42})
+	assert.Nil(t, err)
 
 	req := &kvrpcpb.RawGetRequest{
 		Key: []byte{99},

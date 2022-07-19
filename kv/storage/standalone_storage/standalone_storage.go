@@ -43,10 +43,19 @@ func (s *StandAloneStorage) Reader(ctx *kvrpcpb.Context) (storage.StorageReader,
 func (s *StandAloneStorage) Write(ctx *kvrpcpb.Context, batch []storage.Modify) error {
 	t := s.db.NewTransaction(true)
 	for _, modify := range batch {
-		err := t.Set(modify.Key(), modify.Value())
-		if err != nil {
-			return err
+		switch modify.Data.(type) {
+		case storage.Put:
+			err := t.Set(modify.Key(), modify.Value())
+			if err != nil {
+				return err
+			}
+		case storage.Delete:
+			err := t.Delete(modify.Key())
+			if err != nil {
+				return err
+			}
 		}
+
 	}
 	return t.Commit()
 }
@@ -55,13 +64,15 @@ type StandAloneStorageReader struct {
 	db *badger.DB
 }
 
+var ErrNotFound = errors.New("not found")
+
 func (s StandAloneStorageReader) GetCF(cf string, key []byte) ([]byte, error) {
 	var value []byte
 	err := s.db.View(func(txn *badger.Txn) error {
 		v, err := txn.Get(key)
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			value = nil
-			return err
+			return ErrNotFound
 		}
 		err = v.Value(func(val []byte) error {
 			value = val
