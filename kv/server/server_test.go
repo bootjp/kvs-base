@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -29,7 +30,15 @@ func Get(s *standalone_storage.StandAloneStorage, cf string, key []byte) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	return reader.GetCF(cf, key)
+	v, err := reader.GetCF(cf, key)
+	if err != nil {
+		if errors.Is(err, standalone_storage.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return v, nil
+
 }
 
 func Iter(s *standalone_storage.StandAloneStorage, cf string) (engine_util.DBIterator, error) {

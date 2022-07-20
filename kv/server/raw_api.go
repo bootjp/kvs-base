@@ -14,7 +14,6 @@ import (
 
 // RawGet return the corresponding Get response based on RawGetRequest's CF and Key fields
 func (server *Server) RawGet(_ context.Context, req *kvrpcpb.RawGetRequest) (*kvrpcpb.RawGetResponse, error) {
-	// Your Code Here (1).
 	v, err := server.storage.Reader(req.Context)
 	if err != nil {
 		return nil, err
@@ -30,22 +29,27 @@ func (server *Server) RawGet(_ context.Context, req *kvrpcpb.RawGetRequest) (*kv
 		Value:    raw,
 		NotFound: notfound,
 	}, nil
-
-	//return nil, nil
 }
 
 // RawPut puts the target data into storage and returns the corresponding response
 func (server *Server) RawPut(_ context.Context, req *kvrpcpb.RawPutRequest) (*kvrpcpb.RawPutResponse, error) {
-	// Your Code Here (1).
-	// Hint: Consider using Storage.Modify to store data to be modified
-	return nil, nil
+	var m []storage.Modify
+	m = append(m, storage.Modify{
+		Data: storage.Put{
+			Key:   req.GetKey(),
+			Cf:    req.GetCf(),
+			Value: req.GetValue(),
+		},
+	})
+	p := &kvrpcpb.Context{}
+
+	err := server.storage.Write(p, m)
+	return nil, err
 }
 
 // RawDelete delete the target data from storage and returns the corresponding response
 func (server *Server) RawDelete(ctx context.Context, req *kvrpcpb.RawDeleteRequest) (*kvrpcpb.RawDeleteResponse, error) {
-	// Your Code Here (1).
-	// Hint: Consider using Storage.Modify to store data to be deleted
-	m := []storage.Modify{}
+	var m []storage.Modify
 
 	m = append(m, storage.Modify{
 		Data: storage.Delete{
@@ -69,7 +73,33 @@ func (server *Server) RawDelete(ctx context.Context, req *kvrpcpb.RawDeleteReque
 
 // RawScan scan the data starting from the start key up to limit. and return the corresponding result
 func (server *Server) RawScan(_ context.Context, req *kvrpcpb.RawScanRequest) (*kvrpcpb.RawScanResponse, error) {
-	// Your Code Here (1).
-	// Hint: Consider using reader.IterCF
-	return nil, nil
+	reader, err := server.storage.Reader(req.Context)
+	if err != nil {
+		return nil, err
+	}
+	it := reader.IterCF(req.GetCf())
+	defer it.Close()
+
+	res := &kvrpcpb.RawScanResponse{
+		Kvs: []*kvrpcpb.KvPair{},
+	}
+	cnt := uint32(1)
+
+	for it.Seek(req.GetStartKey()); it.Valid(); it.Next() {
+		item := it.Item()
+		v, err := item.Value()
+		if err != nil {
+			return nil, err
+		}
+		res.Kvs = append(res.Kvs, &kvrpcpb.KvPair{
+			Key:   item.Key(),
+			Value: v,
+		})
+		if req.Limit <= cnt {
+			break
+		}
+		cnt++
+	}
+
+	return res, nil
 }
