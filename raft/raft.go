@@ -164,39 +164,62 @@ func newRaft(c *Config) *Raft {
 	if err := c.validate(); err != nil {
 		panic(err.Error())
 	}
-	// Your Code Here (2A).
-	return nil
+
+	prs := map[uint64]*Progress{}
+	for _, peer := range c.peers {
+		prs[peer] = &Progress{}
+	}
+
+	return &Raft{
+		id:  c.ID,
+		Prs: prs,
+	}
+	//electionElapsed: c.ElectionTick,
 }
 
 // sendAppend sends an append RPC with new entries (if any) and the
 // current commit index to the given peer. Returns true if a message was sent.
 func (r *Raft) sendAppend(to uint64) bool {
+	//r.Prs[to].
 	// Your Code Here (2A).
 	return false
 }
 
 // sendHeartbeat sends a heartbeat RPC to the given peer.
 func (r *Raft) sendHeartbeat(to uint64) {
-	// Your Code Here (2A).
+	r.msgs = append(r.msgs, pb.Message{From: r.id, To: to, Term: r.Term, MsgType: pb.MessageType_MsgHeartbeat})
 }
 
 // tick advances the internal logical clock by a single tick.
 func (r *Raft) tick() {
-	// Your Code Here (2A).
+	r.Term++
+	for u := range r.Prs {
+		if r.id == u {
+			continue
+		}
+		r.sendHeartbeat(u)
+	}
 }
 
 // becomeFollower transform this peer's state to Follower
 func (r *Raft) becomeFollower(term uint64, lead uint64) {
-	// Your Code Here (2A).
+	r.State = StateFollower
+	r.Lead = lead
+	r.Term = term
 }
 
 // becomeCandidate transform this peer's state to candidate
 func (r *Raft) becomeCandidate() {
-	// Your Code Here (2A).
+	r.State = StateCandidate
+	r.Term++
 }
 
 // becomeLeader transform this peer's state to leader
 func (r *Raft) becomeLeader() {
+	r.Lead = r.id
+	r.State = StateLeader
+	r.msgs = append(r.msgs, pb.Message{MsgType: pb.MessageType_MsgPropose, From: r.id, To: r.id})
+	//r
 	// Your Code Here (2A).
 	// NOTE: Leader should propose a noop entry on its term
 }
@@ -207,19 +230,45 @@ func (r *Raft) Step(m pb.Message) error {
 	// Your Code Here (2A).
 	switch r.State {
 	case StateFollower:
+		r.Term = m.Term
+		for _, entry := range m.Entries {
+			r.RaftLog.entries = append(r.RaftLog.entries, *entry)
+		}
 	case StateCandidate:
+		if r.Term < m.Term {
+			r.Term = m.Term
+			r.State = StateFollower
+		}
 	case StateLeader:
+		if r.Term < m.Term {
+			r.becomeFollower(m.Term, m.From)
+			return nil
+		}
+		r.Term = m.Term
+		r.sendAppend(m.From)
+
+		//if m.MsgType == pb.MessageType_MsgHeartbeat {
+		//	r.msgs = append(r.msgs, pb.Message{
+		//		MsgType: pb.MessageType_MsgHeartbeat,
+		//		Index:   0,
+		//		LogTerm: 0,
+		//	})
+		//	//r.sendHeartbeat(m.From)
+		//}
+		//r.Term++
 	}
 	return nil
 }
 
 // handleAppendEntries handle AppendEntries RPC request
 func (r *Raft) handleAppendEntries(m pb.Message) {
+
 	// Your Code Here (2A).
 }
 
 // handleHeartbeat handle Heartbeat RPC request
 func (r *Raft) handleHeartbeat(m pb.Message) {
+	//r
 	// Your Code Here (2A).
 }
 
@@ -230,10 +279,12 @@ func (r *Raft) handleSnapshot(m pb.Message) {
 
 // addNode add a new node to raft group
 func (r *Raft) addNode(id uint64) {
+	r.Prs[id] = &Progress{}
 	// Your Code Here (3A).
 }
 
 // removeNode remove a node from raft group
 func (r *Raft) removeNode(id uint64) {
+	delete(r.Prs, id)
 	// Your Code Here (3A).
 }

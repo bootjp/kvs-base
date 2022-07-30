@@ -126,6 +126,9 @@ func TestCandidateStartNewElection2AA(t *testing.T) {
 // start a new election by incrementing its term and initiating another
 // round of RequestVote RPCs.
 // Reference: section 5.2
+//  testNonleaderStartElection は、フォロワーが election timeout を超えて通信を受信しない場合、新しいリーダーを選択するために選挙を開始することをテストします。現在の任期を増やし、候補者状態へ遷移する。その後、自分自身に投票し、クラスタ内の他の各サーバに並行してRequestVote RPCを発行します。
+//また、候補者が過半数を獲得できなかった場合はタイムアウトし、任期を延長してRequestVote RPCを再度開始することで新しい選挙を開始する。
+// 参考: セクション 5.2
 func testNonleaderStartElection(t *testing.T, state StateType) {
 	// election timeout
 	et := 10

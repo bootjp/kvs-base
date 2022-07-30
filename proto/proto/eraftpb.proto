@@ -36,6 +36,23 @@ message Snapshot {
     SnapshotMetadata metadata = 2;
 }
 
+
+/*
+ ここで定義される MessageType の中には、ネットワークから来るのではないローカルなメッセージもあるが、その場合は Step メソッドを用いて処理する必要がある。
+MessageType_MsgHup」は選挙に使われるローカルメッセージです。選挙がタイムアウトした場合、ノードは 'MessageType_MsgHup' を Step メソッドに渡して、新しい選挙を開始しなければなりません。
+MessageType_MsgBeat' は 'MessageType_MsgHeartbeat' タイプのハートビートをフォロワーに送るようリーダーに合図するローカルメッセージである。
+ MessageType_MsgPropose' は、リーダーのログエントリにデータを追加することを提案するローカルメッセージである。
+ MessageType_MsgAppend' は、複製するログエントリを含む。
+MessageType_MsgAppendResponse' はログ複製要求('MessageType_MsgAppend')に対するレスポンスである。
+ MessageType_MsgRequestVote' は選挙の投票依頼を行う。
+MessageType_MsgRequestVoteResponse' は投票要求に対する応答である。
+ MessageType_MsgSnapshot' はスナップショットメッセージのインストールを要求するものです。
+ MessageType_MsgHeartbeat' は、リーダーからフォロワーへのハートビートを送信する。
+ MessageType_MsgHeartbeatResponse' は 'MessageType_MsgHeartbeat' に対するレスポンスである。
+MessageType_MsgTransferLeader' は、リーダーに対してリーダー権の譲渡を要求する。
+ MessageType_MsgTimeoutNow' は、リーダーから統率者転送対象に送信され、転送対象を直ちにタイムアウトさせるためのものである。タイムアウトさせ、新たな選挙を開始させる。
+
+ */
 // Some MessageType defined here are local messages which not come from the network, but should
 // also use the Step method to handle
 enum MessageType {
