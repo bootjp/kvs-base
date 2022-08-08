@@ -63,10 +63,16 @@ type Config struct {
 	// candidate and start an election. ElectionTick must be greater than
 	// HeartbeatTick. We suggest ElectionTick = 10 * HeartbeatTick to avoid
 	// unnecessary leader switching.
+	// ElectionTickはノードの数です。選挙と選挙の間に通過しなければならないティック呼び出し。
+	// つまり、ElectionTickが経過する前にフォロワーが現在の用語のリーダーからメッセージを受信しなかった場合、そのフォロワーは候補になり、選挙を開始します。
+	// ElectionTickはより大きくなければなりません
+	// HeartbeatTick。不要なリーダーの切り替えを避けるために、ElectionTick=10*HeartbeatTickをお勧めします。
 	ElectionTick int
 	// HeartbeatTick is the number of Node.Tick invocations that must pass between
 	// heartbeats. That is, a leader sends heartbeat messages to maintain its
 	// leadership every HeartbeatTick ticks.
+	// HeartbeatTickはノードの数です。心拍と心拍の間を通過する必要があるティック呼び出し。
+	// つまり、リーダーはハートビートメッセージを送信して、HeartbeatTickのティックごとにリーダーシップを維持します。
 	HeartbeatTick int
 
 	// Storage is the storage for raft. raft generates entries and states to be
@@ -78,6 +84,8 @@ type Config struct {
 	// raft. raft will not return entries to the application smaller or equal to
 	// Applied. If Applied is unset when restarting, raft might return previous
 	// applied entries. This is a very application dependent configuration.
+	// 「適用済」 は、最後に適用された索引です。ラフトを再起動するときのみ設定してください。ラフトは、以下のサイズ以下のエントリをアプリケーションに返しません。
+	// 適用済み。再起動時にAppliedが設定されていない場合、raftは以前に適用されたエントリを返すことがあります。これは、アプリケーションに大きく依存する構成です。
 	Applied uint64
 }
 
@@ -132,15 +140,20 @@ type Raft struct {
 	Lead uint64
 
 	// heartbeat interval, should send
+	// ハートビート間隔、送信する
 	heartbeatTimeout int
 	// baseline of election interval
+	// 選挙区間ベースライン
 	electionTimeout int
 	// number of ticks since it reached last heartbeatTimeout.
 	// only leader keeps heartbeatElapsed.
+	// 最後のheartbeatTimeoutに到達してからのtick数。leaderのみがheartbeatElapsedを保持する。
 	heartbeatElapsed int
 	// Ticks since it reached last electionTimeout when it is leader or candidate.
 	// Number of ticks since it reached last electionTimeout or received a
 	// valid message from current leader when it is a follower.
+	// リーダーまたは候補である場合，それが最後のelectionTimeoutに到達してからのティック数．
+	// フォロワーである場合、最後のelectionTimeoutに達してからのティック数、または現在のリーダーからの有効なメッセージを受信した数。
 	electionElapsed int
 
 	// leadTransferee is id of the leader transfer target when its value is not zero.
@@ -171,8 +184,30 @@ func newRaft(c *Config) *Raft {
 	}
 
 	return &Raft{
-		id:  c.ID,
-		Prs: prs,
+		id:               c.ID,
+		Term:             0,
+		Vote:             0,
+		State:            StateFollower,
+		RaftLog:          newLog(c.Storage),
+		Prs:              prs,
+		votes:            map[uint64]bool{},
+		msgs:             []pb.Message{},
+		heartbeatTimeout: 0,
+		// baseline of election interval
+		electionTimeout: c.ElectionTick,
+
+		// number of ticks since it reached last heartbeatTimeout.
+		// only leader keeps heartbeatElapsed.
+		// 最後のheartbeatTimeoutに到達してからのtick数。leaderのみがheartbeatElapsedを保持する。
+		heartbeatElapsed: 0,
+		// Ticks since it reached last electionTimeout when it is leader or candidate.
+		// Number of ticks since it reached last electionTimeout or received a
+		// valid message from current leader when it is a follower.
+		// リーダーまたは候補である場合，それが最後のelectionTimeoutに到達してからのティック数．
+		// フォロワーである場合、最後のelectionTimeoutに達してからのティック数、または現在のリーダーからの有効なメッセージを受信した数。
+		electionElapsed:  0,
+		leadTransferee:   0,
+		PendingConfIndex: 0,
 	}
 	//electionElapsed: c.ElectionTick,
 }
@@ -188,16 +223,20 @@ func (r *Raft) sendAppend(to uint64) bool {
 // sendHeartbeat sends a heartbeat RPC to the given peer.
 func (r *Raft) sendHeartbeat(to uint64) {
 	r.msgs = append(r.msgs, pb.Message{From: r.id, To: to, Term: r.Term, MsgType: pb.MessageType_MsgHeartbeat})
+	r.heartbeatElapsed++
 }
 
 // tick advances the internal logical clock by a single tick.
 func (r *Raft) tick() {
-	r.Term++
+	print("")
 	for u := range r.Prs {
 		if r.id == u {
 			continue
 		}
 		r.sendHeartbeat(u)
+	}
+	if r.heartbeatElapsed > r.heartbeatTimeout {
+		r.becomeCandidate()
 	}
 }
 
@@ -219,7 +258,8 @@ func (r *Raft) becomeLeader() {
 	r.Lead = r.id
 	r.State = StateLeader
 	r.msgs = append(r.msgs, pb.Message{MsgType: pb.MessageType_MsgPropose, From: r.id, To: r.id})
-	//r
+	// becomeLeader
+	//r.Term = r.Term
 	// Your Code Here (2A).
 	// NOTE: Leader should propose a noop entry on its term
 }
@@ -231,20 +271,22 @@ func (r *Raft) Step(m pb.Message) error {
 	switch r.State {
 	case StateFollower:
 		r.Term = m.Term
-		for _, entry := range m.Entries {
-			r.RaftLog.entries = append(r.RaftLog.entries, *entry)
+		if m.MsgType == pb.MessageType_MsgAppend {
+			for _, entry := range m.Entries {
+				r.RaftLog.entries = append(r.RaftLog.entries, *entry)
+			}
 		}
 	case StateCandidate:
 		if r.Term < m.Term {
 			r.Term = m.Term
 			r.State = StateFollower
+			return nil
 		}
 	case StateLeader:
 		if r.Term < m.Term {
 			r.becomeFollower(m.Term, m.From)
 			return nil
 		}
-		r.Term = m.Term
 		r.sendAppend(m.From)
 
 		//if m.MsgType == pb.MessageType_MsgHeartbeat {
@@ -268,6 +310,7 @@ func (r *Raft) handleAppendEntries(m pb.Message) {
 
 // handleHeartbeat handle Heartbeat RPC request
 func (r *Raft) handleHeartbeat(m pb.Message) {
+	r.msgs = append(r.msgs, pb.Message{MsgType: pb.MessageType_MsgHeartbeatResponse, From: r.id, To: m.From})
 	//r
 	// Your Code Here (2A).
 }
