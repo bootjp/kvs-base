@@ -1,7 +1,9 @@
 module github.com/bootjp/kvs-base
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.3
+
 replace github.com/pingcap/tidb => github.com/pingcap-incubator/tinysql v0.0.0-20200518090433-a7d00f9e6aa7
+
 replace google.golang.org/grpc => google.golang.org/grpc v1.25.1
 
 go 1.18
@@ -10,7 +12,6 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Connor1996/badger v1.5.1-0.20200306031920-9bbcbd8ba570
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
-	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/docker/go-units v0.4.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.3.4
@@ -18,6 +19,7 @@ require (
 	github.com/juju/errors v0.0.0-20220203013757-bd733f3c86b9
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/petar/GoLLRB v0.0.0-20190514000832-33fb24c13b99
+	github.com/pingcap-incubator/tinykv v0.0.0-20200514052412-e01d729bd45c
 	github.com/pingcap/check v0.0.0-20200212061837-5e12011dc712
 	github.com/pingcap/errcode v0.0.0-20180921232412-a1a7271709d9
 	github.com/pingcap/errors v0.11.5-0.20190809092503-95897b64e011
@@ -38,7 +40,6 @@ require (
 require (
 	github.com/DataDog/zstd v1.4.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/coocood/bbloom v0.0.0-20190830030839-58deb6228d64 // indirect
 	github.com/coocood/rtutil v0.0.0-20190304133409-c84515f646f2 // indirect
@@ -54,7 +55,6 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/flatbuffers v1.12.1 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4 // indirect
@@ -63,7 +63,6 @@ require (
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/juju/testing v1.0.1 // indirect
-	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -85,7 +84,6 @@ require (
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
-	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
