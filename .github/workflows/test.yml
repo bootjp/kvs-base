@@ -4,14 +4,12 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.18.x]
-        os: [ubuntu-latest, macos-latest]
+        go-version: [1.18.x, 1.19.x]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v3
-      - run: go install github.com/mattn/goreman@latest
-      - run: make build
       - run: go test ./...
