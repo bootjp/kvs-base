@@ -84,6 +84,8 @@ func TestStartAsFollower2AA(t *testing.T) {
 // it will send a MessageType_MsgHeartbeat with m.Index = 0, m.LogTerm=0 and empty entries
 // as heartbeat to all followers.
 // Reference: section 5.2
+// TestLeaderBcastBeatは、リーダーがハートビートティックを受信した場合、ハートビートとしてm.Index=0、m.LogTerm=0、空エントリの "MessageType_MsgHeartbeat "をすべてのフォロワーに送信することをテストします。
+// 参考：5.2節
 func TestLeaderBcastBeat2AA(t *testing.T) {
 	// heartbeat interval
 	hi := 1
@@ -126,9 +128,11 @@ func TestCandidateStartNewElection2AA(t *testing.T) {
 // start a new election by incrementing its term and initiating another
 // round of RequestVote RPCs.
 // Reference: section 5.2
-//  testNonleaderStartElection は、フォロワーが election timeout を超えて通信を受信しない場合、新しいリーダーを選択するために選挙を開始することをテストします。現在の任期を増やし、候補者状態へ遷移する。その後、自分自身に投票し、クラスタ内の他の各サーバに並行してRequestVote RPCを発行します。
+// testNonleaderStartElection は、フォロワーが election timeout を超えて通信を受信しない場合、新しいリーダーを選択するために選挙を開始することをテストします。
+// 現在の任期を増やし、候補者状態へ遷移する。その後、自分自身に投票し、クラスタ内の他の各サーバに並行してRequestVote RPCを発行します。
 //また、候補者が過半数を獲得できなかった場合はタイムアウトし、任期を延長してRequestVote RPCを再度開始することで新しい選挙を開始する。
 // 参考: セクション 5.2
+
 func testNonleaderStartElection(t *testing.T, state StateType) {
 	// election timeout
 	et := 10
@@ -160,16 +164,27 @@ func testNonleaderStartElection(t *testing.T, state StateType) {
 		{From: 1, To: 3, Term: 2, MsgType: pb.MessageType_MsgRequestVote},
 	}
 	if !reflect.DeepEqual(msgs, wmsgs) {
-		t.Errorf("msgs = %v, want %v", msgs, wmsgs)
+		t.Errorf("msgs = %+v\n, want %+v\n", msgs, wmsgs)
 	}
 }
 
 // TestLeaderElectionInOneRoundRPC tests all cases that may happen in
-// leader election during one round of RequestVote RPC:
+// leader election during one round of RequestVote RPC// TestLeaderElectionInOneRoundRPC は、RequestVote RPC の 1 ラウンドで起こりうるすべてのケースをテストする。
+//// RequestVote RPCの1ラウンドの間にリーダー選挙を行う。
+//// a) 選挙に勝利する．
+//// b) 選挙に負ける．
+//// c) 結果が不明確である
+//// 参考：5.2節:
 // a) it wins the election
 // b) it loses the election
 // c) it is unclear about the result
 // Reference: section 5.2
+// TestLeaderElectionInOneRoundRPC は、RequestVote RPC の 1 ラウンドで起こりうるすべてのケースをテストする。
+// RequestVote RPCの1ラウンドの間にリーダー選挙を行う。
+// a) 選挙に勝利する．
+// b) 選挙に負ける．
+// c) 結果が不明確である
+// 参考：5.2節
 func TestLeaderElectionInOneRoundRPC2AA(t *testing.T) {
 	tests := []struct {
 		size  int

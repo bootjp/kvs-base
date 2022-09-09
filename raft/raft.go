@@ -16,6 +16,7 @@ package raft
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 
 	pb "github.com/bootjp/kvs-base/proto/pkg/eraftpb"
 )
@@ -111,6 +112,7 @@ func (c *Config) validate() error {
 
 // Progress represents a follower’s progress in the view of the leader. Leader maintains
 // progresses of all followers, and sends entries to the follower based on its progress.
+// Progressは、リーダーから見たフォロワーの進捗を表す。リーダーは フォロワーの進捗を管理し、その進捗に応じたエントリーをフォロワーに送信する。
 type Progress struct {
 	Match, Next uint64
 }
@@ -214,9 +216,16 @@ func newRaft(c *Config) *Raft {
 
 // sendAppend sends an append RPC with new entries (if any) and the
 // current commit index to the given peer. Returns true if a message was sent.
+// sendAppend は、指定されたピアに新しいエントリ (もしあれば) と現在のコミットインデックスを含む append RPC を送信します。
+// メッセージが送信された場合は true を返します。
 func (r *Raft) sendAppend(to uint64) bool {
-	//r.Prs[to].
-	// Your Code Here (2A).
+	for i := range r.msgs {
+		if r.msgs[i].To == to {
+			//append(r.msgs)
+		}
+	}
+	//r.msgs[0].To = to
+	//ifur Code Here (2A).
 	return false
 }
 
@@ -224,19 +233,52 @@ func (r *Raft) sendAppend(to uint64) bool {
 func (r *Raft) sendHeartbeat(to uint64) {
 	r.msgs = append(r.msgs, pb.Message{From: r.id, To: to, Term: r.Term, MsgType: pb.MessageType_MsgHeartbeat})
 	r.heartbeatElapsed++
+	//r.electionElapsed++
+
+	if r.heartbeatElapsed >= r.heartbeatTimeout {
+		r.heartbeatElapsed = 0
+		if err := r.Step(pb.Message{From: r.id, MsgType: pb.MessageType_MsgBeat}); err != nil {
+			log.Printf("error occurred during checking sending heartbeat: %v", err)
+		}
+	}
 }
 
 // tick advances the internal logical clock by a single tick.
 func (r *Raft) tick() {
-	print("")
-	for u := range r.Prs {
-		if r.id == u {
-			continue
+	switch r.State {
+	case StateLeader:
+		for u := range r.Prs {
+			if r.id == u {
+				continue
+			}
+			r.sendHeartbeat(u)
 		}
-		r.sendHeartbeat(u)
-	}
-	if r.heartbeatElapsed > r.heartbeatTimeout {
-		r.becomeCandidate()
+
+	case StateFollower:
+		r.electionElapsed++
+		if r.electionElapsed >= r.electionTimeout {
+			r.electionElapsed = 0
+			r.becomeCandidate()
+			for u := range r.Prs {
+				if r.id == u {
+					continue
+				}
+				r.msgs = append(r.msgs, pb.Message{From: r.id, To: u, MsgType: pb.MessageType_MsgRequestVote, Term: r.Term})
+			}
+		}
+
+	case StateCandidate:
+		r.electionElapsed++
+		if r.electionElapsed >= r.electionTimeout {
+			r.electionElapsed = 0
+			r.Term++
+			for u := range r.Prs {
+				if r.id == u {
+					continue
+				}
+				r.msgs = append(r.msgs, pb.Message{From: r.id, To: u, MsgType: pb.MessageType_MsgRequestVote, Term: r.Term})
+			}
+		}
 	}
 }
 
@@ -251,6 +293,9 @@ func (r *Raft) becomeFollower(term uint64, lead uint64) {
 func (r *Raft) becomeCandidate() {
 	r.State = StateCandidate
 	r.Term++
+	r.votes = map[uint64]bool{}
+	r.votes[r.id] = true
+	r.Vote = r.id
 }
 
 // becomeLeader transform this peer's state to leader
@@ -278,26 +323,15 @@ func (r *Raft) Step(m pb.Message) error {
 		}
 	case StateCandidate:
 		if r.Term < m.Term {
-			r.Term = m.Term
-			r.State = StateFollower
-			return nil
+			r.becomeFollower(m.Term, m.From)
 		}
+		r.sendAppend(m.From)
 	case StateLeader:
 		if r.Term < m.Term {
 			r.becomeFollower(m.Term, m.From)
-			return nil
 		}
 		r.sendAppend(m.From)
 
-		//if m.MsgType == pb.MessageType_MsgHeartbeat {
-		//	r.msgs = append(r.msgs, pb.Message{
-		//		MsgType: pb.MessageType_MsgHeartbeat,
-		//		Index:   0,
-		//		LogTerm: 0,
-		//	})
-		//	//r.sendHeartbeat(m.From)
-		//}
-		//r.Term++
 	}
 	return nil
 }
