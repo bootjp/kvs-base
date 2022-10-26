@@ -17,6 +17,7 @@ require (
 
 require (
 	github.com/armon/go-metrics v0.3.9 // indirect
+	github.com/buraksezer/consistent v0.9.0 // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
