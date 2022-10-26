@@ -123,7 +123,7 @@ func Test_value_can_be_deleted(t *testing.T) {
 	}
 	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("Get RPC failed: %v", err)
+		t.Fatalf("RawGet RPC failed: %v", err)
 	}
 
 	if !reflect.DeepEqual(want, resp.Data) {
@@ -137,7 +137,7 @@ func Test_value_can_be_deleted(t *testing.T) {
 
 	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("Get RPC failed: %v", err)
+		t.Fatalf("RawGet RPC failed: %v", err)
 	}
 	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
 		t.Fatalf("Delete test failed: %v %v", resp.Data, resp.Error)
@@ -165,7 +165,7 @@ func Test_consistency_satisfy_write_after_read(t *testing.T) {
 		}
 		resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 		if err != nil {
-			t.Fatalf("Get RPC failed: %v", err)
+			t.Fatalf("RawGet RPC failed: %v", err)
 		}
 
 		if !reflect.DeepEqual(want, resp.Data) {
@@ -188,7 +188,7 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	time.Sleep(9 * time.Second)
 	resp, err := c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("Get RPC failed: %v", err)
+		t.Fatalf("RawGet RPC failed: %v", err)
 	}
 
 	if !reflect.DeepEqual(want, resp.Data) {
@@ -198,7 +198,7 @@ func Test_does_not_retrieve_data_beyond_TTL(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	resp, err = c.GetData(context.TODO(), &pb.GetDataRequest{Key: key})
 	if err != nil {
-		t.Fatalf("Get RPC failed: %v", err)
+		t.Fatalf("RawGet RPC failed: %v", err)
 	}
 	if resp.Error != pb.GetDataError_DATA_NOT_FOUND {
 		t.Fatalf("Delete test failed: %v", resp.Data)

@@ -19,7 +19,7 @@ type MemStore struct {
 	txKey map[uint64]struct{}
 }
 
-func (k *MemStore) Get(key Key) (Value, error) {
+func (k *MemStore) RawGet(key Key) (Value, error) {
 	k.mtx.RLock()
 	defer k.mtx.RUnlock()
 
@@ -52,7 +52,7 @@ func (k *MemStore) Delete(key Key) error {
 	return nil
 }
 
-func (k *MemStore) Set(key Key, value Value) error {
+func (k *MemStore) RawPut(key Key, value Value) error {
 	k.mtx.Lock()
 	defer k.mtx.Unlock()
 

@@ -54,7 +54,7 @@ func (r *RPC) KvResolveLock(c xcontext.Context, request *kvrpcpb.ResolveLockRequ
 }
 
 func (r *RPC) RawGet(c xcontext.Context, request *kvrpcpb.RawGetRequest) (*kvrpcpb.RawGetResponse, error) {
-	v, err := r.kvs.Get(request.GetKey())
+	v, err := r.kvs.RawGet(request.GetKey())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (r *RPC) RawGet(c xcontext.Context, request *kvrpcpb.RawGetRequest) (*kvrpc
 }
 
 func (r *RPC) RawPut(c xcontext.Context, request *kvrpcpb.RawPutRequest) (*kvrpcpb.RawPutResponse, error) {
-	err := r.kvs.Set(request.Key, request.Value)
+	err := r.kvs.RawPut(request.Key, request.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (r *RPC) Coprocessor(c xcontext.Context, request *coprocessor.Request) (*co
 //	}, nil
 //}
 //
-//func (r RPCInterface) Get(_ context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+//func (r RPCInterface) RawGet(_ context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 //	if req.GetKey() == nil {
 //		return nil, ErrInvalidRequest
 //	}
@@ -199,7 +199,7 @@ func (r *RPC) Coprocessor(c xcontext.Context, request *coprocessor.Request) (*co
 //
 //	var rspError = pb.GetDataError_FETCH_ERROR
 //
-//	v, err := r.MemStore.Get(&req.Key)
+//	v, err := r.MemStore.RawGet(&req.Key)
 //	if err != nil {
 //		if errors.Is(err, ErrNotFound) {
 //			rspError = pb.GetDataError_DATA_NOT_FOUND
@@ -243,7 +243,7 @@ func (r *RPC) Coprocessor(c xcontext.Context, request *coprocessor.Request) (*co
 //		pair := Pair{Key: &RPC, Value: &value, Expire: TTLtoTime(0), IsDelete: op.GetDelete()}
 //		txs.Pair = append(txs.Pair, pair)
 //		// ignore error because when nodata set nil data
-//		txs.Aborted[r.MemStore.hash(pair.Key)], _ = r.MemStore.Get(pair.Key)
+//		txs.Aborted[r.MemStore.hash(pair.Key)], _ = r.MemStore.RawGet(pair.Key)
 //	}
 //
 //	e, err := EncodeTrans(txs)
