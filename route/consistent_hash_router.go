@@ -19,11 +19,11 @@ func (h hasher) Sum64(data []byte) uint64 {
 	return xxhash.Sum64(data)
 }
 
-func NewConsistentHashRouter() *ConsistentHashRouter {
+func NewConsistentHashRouter(c *RouterConfig) *ConsistentHashRouter {
 	cfg := consistent.Config{
 		Hasher:            hasher{},
-		PartitionCount:    3,
-		ReplicationFactor: 3,
+		PartitionCount:    c.NodeSize,
+		ReplicationFactor: c.NodeSize,
 		Load:              1.25,
 	}
 

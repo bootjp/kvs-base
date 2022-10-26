@@ -7,6 +7,8 @@ require (
 	github.com/Jille/raft-grpc-leader-rpc v1.1.0
 	github.com/Jille/raft-grpc-transport v1.2.0
 	github.com/Jille/raftadmin v1.2.0
+	github.com/buraksezer/consistent v0.9.0
+	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/raft v1.3.9
 	github.com/pingcap-incubator/tinykv v0.0.0-20221009073517-70a9cc68a9a3
@@ -17,7 +19,6 @@ require (
 
 require (
 	github.com/armon/go-metrics v0.3.9 // indirect
-	github.com/buraksezer/consistent v0.9.0 // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

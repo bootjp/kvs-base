@@ -18,3 +18,7 @@ type Router interface {
 	AddNode(node *Node) error
 	RemoveNode(node *Node) error
 }
+
+type RouterConfig struct {
+	NodeSize int
+}
