@@ -1,55 +1,83 @@
 syntax = "proto3";
 
-import "google/protobuf/duration.proto";
 
 option go_package = "github.com/bootjp/kvs/proto";
 
 service KVS {
-	rpc AddData(AddDataRequest) returns (AddDataResponse) {}
-	rpc GetData(GetDataRequest) returns (GetDataResponse) {}
-	rpc DeleteData(DeleteRequest) returns (DeleteResponse) {}
+  rpc RawPut(PutRequest) returns (PutResponse) {}
+  rpc RawGet(GetRequest) returns (GetResponse) {}
+  rpc RawDelete(DeleteRequest) returns (DeleteResponse) {}
+  rpc RawScan(ScanRequest) returns (ScanResponse) {}
 }
 
-message AddDataRequest {
+message KvPair {
 	bytes key = 1;
-	bytes data = 2;
-	google.protobuf.Duration ttl = 3;
+	bytes value = 2;
+}
+
+message ScanRequest {
+	bytes start_key = 1;
+	uint32 limit = 2;
+}
+
+message ScanResponse {
+	repeated KvPair kvs = 1;
+	GetDataError Error = 2;
+}
+
+message PutRequest {
+  bytes key = 1;
+  bytes value = 2;
+  uint64 ttl_sec = 3;
+}
+
+enum Op {
+  Put = 0;
+  Del = 1;
+  Rollback = 2;
+  Lock = 3;
+}
+
+message Mutation {
+  Op op = 1;
+  bytes key = 2;
+  bytes value = 3;
 }
 
 enum Status {
-	COMMIT = 0;
-	ABORT = 1;
+  COMMIT = 0;
+  ABORT = 1;
 }
 
 message DeleteRequest {
-	bytes key = 1;
+  bytes key = 1;
 }
 
 message DeleteResponse {
-	uint64 commit_index = 1;
-	Status Status = 2;
+  uint64 commit_index = 1;
+  Status Status = 2;
 }
 
-message AddDataResponse {
-	uint64 commit_index = 1;
-	Status Status = 2;
+message PutResponse {
+  uint64 commit_index = 1;
+  Status Status = 2;
 }
 
-message GetDataRequest {
-	bytes key = 1;
+message GetRequest {
+  bytes key = 1;
 }
 
 enum GetDataError {
-	NO_ERROR = 0;
-	FETCH_ERROR = 1;
-	DATA_NOT_FOUND = 2;
+  NO_ERROR = 0;
+  FETCH_ERROR = 1;
+  DATA_NOT_FOUND = 2;
 }
 
-message GetDataResponse {
-	uint64 read_at_index = 1;
-	GetDataError Error = 2;
-	bytes key = 10;
-	bytes data = 20;
+message GetResponse {
+  uint64 read_at_index = 1;
+  GetDataError Error = 2;
+  bytes key = 10;
+  bytes data = 20;
 }
 
 
