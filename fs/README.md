@@ -1,0 +1,1 @@
+https://github.com/jacobsa/fuse/blob/a4cd154343d8844b0513292b545d5ef33a8e10ee/samples/memfs/memfs.go
