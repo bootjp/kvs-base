@@ -31,5 +31,5 @@ func Test(t *testing.T) {
 	assert.Nil(t, res)
 
 	res, err = kvs.RawGet([]byte("aaaaaa"))
-	assert.NoError(t, err)
+	assert.Equal(t, err, ErrNotFound)
 }
