@@ -18,22 +18,18 @@ func init() {
 
 func Test(t *testing.T) {
 	err := kvs.RawPut([]byte("foo"), []byte("bar"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	res, err := kvs.RawGet([]byte("foo"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, []byte("bar"), res)
-
-	kvs.RawDelete([]byte("foo"))
+	assert.NoError(t, kvs.RawDelete([]byte("foo")))
 
 	res, err = kvs.RawGet([]byte("foo"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	assert.Equal(t, err, ErrNotFound)
 	assert.Nil(t, res)
+
+	res, err = kvs.RawGet([]byte("aaaaaa"))
+	assert.NoError(t, err)
 }

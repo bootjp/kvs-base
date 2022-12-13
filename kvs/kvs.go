@@ -1,6 +1,9 @@
 package kvs
 
-import "github.com/dgraph-io/badger/v3"
+import (
+	"errors"
+	"github.com/dgraph-io/badger/v3"
+)
 
 type KVS interface {
 	RawGet(key []byte) ([]byte, error)
@@ -19,6 +22,8 @@ func NewKVS(path string) (KVS, error) {
 	}, nil
 }
 
+var ErrNotFound = errors.New("not found")
+
 func (k KVService) RawGet(key []byte) ([]byte, error) {
 	var res []byte
 
@@ -32,8 +37,9 @@ func (k KVService) RawGet(key []byte) ([]byte, error) {
 			return nil
 		})
 	})
+
 	if err == badger.ErrKeyNotFound {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 
 	return res, err

@@ -9,11 +9,12 @@ import (
 	"io"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/Jille/raft-grpc-leader-rpc/rafterrors"
+	kvss "github.com/bootjp/kvs/kvs"
 	pb "github.com/bootjp/kvs/proto"
+
 	"github.com/hashicorp/raft"
 )
 
@@ -32,8 +33,8 @@ func init() {
 const KeyLimit = 512
 
 type Pair struct {
-	Key      *[KeyLimit]byte
-	Value    *[]byte
+	Key      []byte
+	Value    []byte
 	IsDelete bool
 	Expire   Expire
 }
@@ -56,16 +57,17 @@ type KV map[[KeyLimit]byte]*Pair
 var _ raft.FSM = &KVS{}
 
 type KVS struct {
-	mtx    sync.RWMutex
-	data   KV
-	expire KV
+	db kvss.KVS
 }
 
-func NewKVS() *KVS {
-	s := &KVS{}
-	s.data = map[[KeyLimit]byte]*Pair{}
-	s.expire = map[[KeyLimit]byte]*Pair{}
-	return s
+func NewKVS(path string) *KVS {
+	db, err := kvss.NewKVS(path)
+	if err != nil {
+		panic(err)
+	}
+	return &KVS{
+		db: db,
+	}
 }
 
 var ErrEncode = errors.New("failed data encode")
@@ -104,24 +106,23 @@ func cloneKV(kv KV) KV {
 }
 
 func (f *KVS) Apply(l *raft.Log) interface{} {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
 	p, err := DecodePair(l.Data)
 	if err != nil {
 		return err
 	}
 
 	// TODO mark it as deleted for performance. Remove from Map when creating snapshot
-	if p.IsDelete {
-		debugLog("delete", *p.Key)
-		delete(f.data, *p.Key)
-		delete(f.expire, *p.Key)
-		return true
-	}
-
-	f.data[*p.Key] = &p
-	if !p.Expire.NoExpire {
-		f.expire[*p.Key] = &p
+	switch {
+	case p.IsDelete:
+		err = f.db.RawDelete(p.Key)
+		if err != nil {
+			return err
+		}
+	default:
+		err = f.db.RawPut(p.Key, p.Value)
+		if err != nil {
+			return err
+		}
 	}
 
 	return true
@@ -129,7 +130,8 @@ func (f *KVS) Apply(l *raft.Log) interface{} {
 
 func (f *KVS) Snapshot() (raft.FSMSnapshot, error) {
 	// Make sure that any future calls to f.Apply() don't change the snapshot.
-	return &snapshot{cloneKV(f.data)}, nil
+	//return &snapshot{cloneKV(f.db)}, nil
+	return nil, nil
 }
 
 func (f *KVS) Restore(r io.ReadCloser) error {
@@ -144,24 +146,11 @@ func (f *KVS) Restore(r io.ReadCloser) error {
 }
 
 type snapshot struct {
-	data KV
+	db kvss.KVS
 }
 
 func (s *snapshot) Persist(sink raft.SnapshotSink) error {
-	b := &bytes.Buffer{}
-	e := gob.NewEncoder(b)
-
-	err := e.Encode(s.data)
-	if err != nil {
-		return fmt.Errorf("failed data encode: %w", err)
-	}
-
-	_, err = sink.Write(b.Bytes())
-	if err != nil {
-		_ = sink.Cancel()
-		return fmt.Errorf("sink.Write(): %w", err)
-	}
-	return errors.Unwrap(sink.Close())
+	return nil
 }
 
 func (s *snapshot) Release() {}
@@ -181,10 +170,7 @@ func (r RPCInterface) RawPut(ctx context.Context, req *pb.PutRequest) (*pb.PutRe
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
-	pair := Pair{Key: &tmp, Value: &req.Value, Expire: TTLtoTime(req.GetTtlSec())}
+	pair := Pair{Key: req.Key, Value: req.Value, Expire: TTLtoTime(req.GetTtlSec())}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.PutResponse{
@@ -223,9 +209,6 @@ func (r RPCInterface) RawPut(ctx context.Context, req *pb.PutRequest) (*pb.PutRe
 }
 
 func (r RPCInterface) RawGet(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	r.KVS.mtx.RLock()
-	defer r.KVS.mtx.RUnlock()
-
 	if len(req.GetKey()) > KeyLimit {
 		return &pb.GetResponse{
 			Key:         req.Key,
@@ -235,33 +218,27 @@ func (r RPCInterface) RawGet(ctx context.Context, req *pb.GetRequest) (*pb.GetRe
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
-	v, ok := r.KVS.data[tmp]
-	if !ok {
+	v, err := r.KVS.db.RawGet(req.Key)
+	if err != nil {
+		if err == kvss.ErrNotFound {
+			return &pb.GetResponse{
+				Key:         req.Key,
+				Data:        nil,
+				Error:       pb.GetDataError_DATA_NOT_FOUND,
+				ReadAtIndex: r.Raft.AppliedIndex(),
+			}, nil
+		}
 		return &pb.GetResponse{
 			Key:         req.Key,
 			Data:        nil,
-			Error:       pb.GetDataError_DATA_NOT_FOUND,
-			ReadAtIndex: r.Raft.AppliedIndex(),
-		}, nil
-	}
-
-	// check expire
-	if !v.Expire.NoExpire && v.Expire.Expire(time.Now().UTC()) {
-		r.gcc <- *v
-		return &pb.GetResponse{
-			Key:         req.Key,
-			Data:        nil,
-			Error:       pb.GetDataError_DATA_NOT_FOUND,
+			Error:       pb.GetDataError_FETCH_ERROR,
 			ReadAtIndex: r.Raft.AppliedIndex(),
 		}, nil
 	}
 
 	return &pb.GetResponse{
 		Key:         req.Key,
-		Data:        *v.Value,
+		Data:        v,
 		Error:       pb.GetDataError_NO_ERROR,
 		ReadAtIndex: r.Raft.AppliedIndex(),
 	}, nil
@@ -276,10 +253,7 @@ func (r RPCInterface) RawDelete(ctx context.Context, req *pb.DeleteRequest) (*pb
 		}, fmt.Errorf("reachd key size limit: %d max key size %d", len(req.Key), KeyLimit)
 	}
 
-	var tmp [KeyLimit]byte
-	copy(tmp[:], req.Key)
-
-	pair := Pair{Key: &tmp, Value: nil, IsDelete: true}
+	pair := Pair{Key: req.Key, Value: nil, IsDelete: true}
 	e, err := EncodePair(pair)
 	if err != nil {
 		return &pb.DeleteResponse{
@@ -306,43 +280,11 @@ func (r RPCInterface) RawScan(ctx context.Context, request *pb.ScanRequest) (*pb
 	panic("implement me")
 }
 
-const gcMaxBuffer = 65534
-
-const gcInterval = 500 * time.Millisecond
-
 func NewRPCInterface(kvs *KVS, raft *raft.Raft) *RPCInterface {
 	r := &RPCInterface{
 		KVS:  kvs,
 		Raft: raft,
-		gcc:  make(chan Pair, gcMaxBuffer),
 	}
-	go (func(r *RPCInterface) {
-		debugLog("run gc")
-		ticker := time.NewTicker(gcInterval)
-		for {
-			select {
-			case v := <-r.gcc:
-				v.IsDelete = true
-				e, err := EncodePair(v)
-				if err != nil {
-					log.Println(err)
-				}
-				debugLog("apply delete")
-				_ = r.Raft.Apply(e, time.Second)
-			case <-ticker.C:
-				now := time.Now().UTC()
-				r.KVS.mtx.RLock()
-				for _, pair := range r.KVS.expire {
-					if !pair.Expire.Expire(now) {
-						continue
-					}
-					debugLog("detect expire key", pair)
-					r.gcc <- *pair
-				}
-				r.KVS.mtx.RUnlock()
-			}
-		}
-	})(r)
 	return r
 }
 
