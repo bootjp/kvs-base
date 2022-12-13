@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/hashicorp/raft"
 
@@ -45,7 +46,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	store := kvs.NewKVS()
+	dir, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("raft-%s", *raftId))
+	if err != nil {
+		log.Fatalf("failed to create temp dir: %v", err)
+	}
+
+	store := kvs.NewKVS(dir.Name())
 	r, tm, err := kvs.NewRaft(ctx, *raftId, *myAddr, store, *raftBootstrap, raft.Configuration{
 		Servers: []raft.Server{
 			{
